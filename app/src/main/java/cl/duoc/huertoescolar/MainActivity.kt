@@ -1,5 +1,12 @@
 package cl.duoc.huertoescolar
 
+import android.graphics.Paint
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.unit.dp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,8 +27,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             HuertoEscolarTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                    InicioScreen(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -31,17 +37,42 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
+fun InicioScreen(modifier: Modifier = Modifier){
+    Column(
         modifier = modifier
-    )
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Huerto Escolar",
+            style = MaterialTheme.typography.headlineMedium
+        )
+
+        Text(
+            text = "Organiza los cultivos y las teareas del huerto"
+        )
+
+        Button(
+            onClick = { },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Sectores y cultivos")
+        }
+
+        Button(
+            onClick = { },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Mis tareas")
+        }
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     HuertoEscolarTheme {
-        Greeting("Android")
+        InicioScreen()
     }
 }
