@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             HuertoEscolarTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    InicioScreen(
+                    Navegacion(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -37,7 +37,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun InicioScreen(modifier: Modifier = Modifier){
+fun InicioScreen(
+    onIrTareas: () -> Unit,
+    modifier: Modifier = Modifier
+){
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -61,7 +64,7 @@ fun InicioScreen(modifier: Modifier = Modifier){
         }
 
         Button(
-            onClick = { },
+            onClick = onIrTareas,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Mis tareas")
@@ -73,6 +76,6 @@ fun InicioScreen(modifier: Modifier = Modifier){
 @Composable
 fun GreetingPreview() {
     HuertoEscolarTheme {
-        InicioScreen()
+        InicioScreen(onIrTareas = {})
     }
 }
