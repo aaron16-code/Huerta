@@ -1,5 +1,12 @@
 package cl.duoc.huertoescolar
 
+import android.graphics.Paint
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.unit.dp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,8 +27,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             HuertoEscolarTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                    Navegacion(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -30,18 +36,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HuertoEscolarTheme {
-        Greeting("Android")
-    }
-}
+
+
