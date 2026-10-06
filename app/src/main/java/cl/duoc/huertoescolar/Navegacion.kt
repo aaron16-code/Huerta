@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import cl.duoc.huertoescolar.RolUsuario
 import cl.duoc.huertoescolar.ui.screens.login.LoginScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.SectoresScreen
+import cl.duoc.huertoescolar.ui.screens.sectores.CrearSectorScreen
 
 @Composable
 fun Navegacion(modifier: Modifier = Modifier) {
@@ -50,6 +51,17 @@ fun Navegacion(modifier: Modifier = Modifier) {
                     },
                     onIrTareas = {
                         navController.navigate(Rutas.TAREAS)
+                    },
+                    
+                    onCerrarSesion = {
+                        rolSeleccionado = null
+
+                        navController.navigate(Rutas.LOGIN) {
+                            popUpTo(Rutas.INICIO) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -59,6 +71,9 @@ fun Navegacion(modifier: Modifier = Modifier) {
             rolSeleccionado?.let { rol ->
                 SectoresScreen(
                     rol = rol,
+                    onCrearSector = {
+                        navController.navigate(Rutas.CREAR_SECTOR)
+                    },
                     onVolver = {
                         navController.popBackStack()
                     }
@@ -68,6 +83,16 @@ fun Navegacion(modifier: Modifier = Modifier) {
 
         composable(Rutas.TAREAS) {
             TareasScreen(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(Rutas.CREAR_SECTOR) {
+            CrearSectorScreen(
+                onSectorCreado = {
+                    navController.popBackStack()
+                },
                 onVolver = {
                     navController.popBackStack()
                 }

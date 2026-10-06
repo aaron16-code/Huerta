@@ -19,7 +19,9 @@ fun InicioScreen(
     rol: RolUsuario,
     onIrSectores: () -> Unit,
     onIrTareas: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCerrarSesion: () -> Unit,
+
 
 ) {
     Column(
@@ -59,6 +61,14 @@ fun InicioScreen(
         ) {
             Text("Mis tareas")
         }
+        Button(
+            onClick = onCerrarSesion,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Cerrar sesión")
+        }
+
+
     }
 
 }

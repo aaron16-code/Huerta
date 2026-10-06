@@ -18,7 +18,8 @@ import cl.duoc.huertoescolar.RolUsuario
 fun SectoresScreen(
     rol: RolUsuario,
     onVolver: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCrearSector: () -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -48,7 +49,7 @@ fun SectoresScreen(
 
         if (rol == RolUsuario.ADMINISTRADOR) {
             Button(
-                onClick = { },
+                onClick = onCrearSector,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Crear sector")
