@@ -36,46 +36,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun InicioScreen(
-    onIrTareas: () -> Unit,
-    modifier: Modifier = Modifier
-){
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "Huerto Escolar",
-            style = MaterialTheme.typography.headlineMedium
-        )
 
-        Text(
-            text = "Organiza los cultivos y las teareas del huerto"
-        )
 
-        Button(
-            onClick = { },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Sectores y cultivos")
-        }
 
-        Button(
-            onClick = onIrTareas,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Mis tareas")
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HuertoEscolarTheme {
-        InicioScreen(onIrTareas = {})
-    }
-}
