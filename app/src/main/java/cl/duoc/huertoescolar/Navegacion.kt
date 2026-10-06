@@ -14,6 +14,12 @@ import cl.duoc.huertoescolar.RolUsuario
 import cl.duoc.huertoescolar.ui.screens.login.LoginScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.SectoresScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.CrearSectorScreen
+import cl.duoc.huertoescolar.ui.screens.cultivos.CrearCultivoScreen
+import cl.duoc.huertoescolar.ui.screens.cultivos.CultivosScreen
+import cl.duoc.huertoescolar.ui.screens.cultivos.DetalleCultivoScreen
+import cl.duoc.huertoescolar.ui.screens.cultivos.EditarCultivoScreen
+import cl.duoc.huertoescolar.ui.screens.sectores.DetalleSectorScreen
+import cl.duoc.huertoescolar.ui.screens.sectores.EditarSectorScreen
 
 @Composable
 fun Navegacion(modifier: Modifier = Modifier) {
@@ -49,10 +55,12 @@ fun Navegacion(modifier: Modifier = Modifier) {
                     onIrSectores = {
                         navController.navigate(Rutas.SECTORES)
                     },
+                    onIrCultivos = {
+                        navController.navigate(Rutas.CULTIVOS)
+                    },
                     onIrTareas = {
                         navController.navigate(Rutas.TAREAS)
                     },
-                    
                     onCerrarSesion = {
                         rolSeleccionado = null
 
@@ -96,6 +104,56 @@ fun Navegacion(modifier: Modifier = Modifier) {
                 onVolver = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        composable(Rutas.EDITAR_SECTOR) {
+            EditarSectorScreen(
+                onVolver = { navController.popBackStack() }
+            )
+        }
+
+        composable(Rutas.DETALLE_SECTOR) {
+            DetalleSectorScreen(
+                onVolver = { navController.popBackStack() }
+            )
+        }
+
+        composable(Rutas.CULTIVOS) {
+            rolSeleccionado?.let { rol ->
+                CultivosScreen(
+                    rol = rol,
+                    onCrearCultivo = {
+                        navController.navigate(Rutas.CREAR_CULTIVO)
+                    },
+                    onEditarCultivo = {
+                        navController.navigate(Rutas.EDITAR_CULTIVO)
+                    },
+                    onVerDetalle = {
+                        navController.navigate(Rutas.DETALLE_CULTIVO)
+                    },
+                    onVolver = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable(Rutas.CREAR_CULTIVO) {
+            CrearCultivoScreen(
+                onVolver = { navController.popBackStack() }
+            )
+        }
+
+        composable(Rutas.EDITAR_CULTIVO) {
+            EditarCultivoScreen(
+                onVolver = { navController.popBackStack() }
+            )
+        }
+
+        composable(Rutas.DETALLE_CULTIVO) {
+            DetalleCultivoScreen(
+                onVolver = { navController.popBackStack() }
             )
         }
     }

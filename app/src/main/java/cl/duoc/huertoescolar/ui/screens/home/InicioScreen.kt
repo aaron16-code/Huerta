@@ -18,9 +18,10 @@ import cl.duoc.huertoescolar.RolUsuario
 fun InicioScreen(
     rol: RolUsuario,
     onIrSectores: () -> Unit,
+    onIrCultivos: () -> Unit,
     onIrTareas: () -> Unit,
-    modifier: Modifier = Modifier,
     onCerrarSesion: () -> Unit,
+    modifier: Modifier = Modifier
 
 
 ) {
@@ -52,14 +53,14 @@ fun InicioScreen(
             onClick = onIrSectores,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Sectores y cultivos")
+            Text("Sectores")
         }
 
         Button(
-            onClick = onIrTareas,
+            onClick = onIrCultivos,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Mis tareas")
+            Text("Cultivos")
         }
         Button(
             onClick = onCerrarSesion,

@@ -73,7 +73,7 @@ fun CrearSectorScreen(
 
         Button(
             onClick = {
-                if (sectorViewModel.validarFormulario()) {
+                if (sectorViewModel.guardarSector()) {
                     onSectorCreado()
                 }
             },

@@ -13,6 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cl.duoc.huertoescolar.RolUsuario
+import cl.duoc.huertoescolar.EstadoSector
+import cl.duoc.huertoescolar.RepositorioHuerto
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun SectoresScreen(
@@ -23,6 +27,7 @@ fun SectoresScreen(
 ) {
     Column(
         modifier = modifier
+            .verticalScroll(rememberScrollState())
             .fillMaxSize()
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -32,18 +37,28 @@ fun SectoresScreen(
             style = MaterialTheme.typography.headlineMedium
         )
 
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Bancal 1",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text("Ubicación: Zona norte")
-                Text("Estado: En uso")
-                Text("Responsable: Docente de prueba")
+        RepositorioHuerto.sectores.forEach { sector ->
+            val estadoTexto = when (sector.estado) {
+                EstadoSector.DISPONIBLE -> "Disponible"
+                EstadoSector.EN_USO -> "En uso"
+                EstadoSector.EN_MANTENIMIENTO -> "En mantenimiento"
+                EstadoSector.FUERA_DE_USO -> "Fuera de uso"
+            }
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = sector.nombre,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(sector.descripcion)
+                    Text("Ubicación: ${sector.ubicacion}")
+                    Text("Estado: $estadoTexto")
+                    Text("Responsable: ${sector.responsable}")
+                }
             }
         }
 
