@@ -15,9 +15,15 @@ import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
 @Composable
 fun InicioScreen(
     rol: RolUsuario,
+    onIrPerfil: () -> Unit,
     onIrSectores: () -> Unit,
     onIrCultivos: () -> Unit,
     onIrTareas: () -> Unit,
+    onIrValidarTareas: () -> Unit,
+    onIrProblemas: () -> Unit,
+    onIrAlertas: () -> Unit,
+    onIrSensores: () -> Unit,
+    onIrHistorial: () -> Unit,
     onCerrarSesion: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -40,10 +46,61 @@ fun InicioScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Text("¿Qué deseas revisar?", style = MaterialTheme.typography.titleLarge)
-        BotonPrincipal("Sectores del huerto", onIrSectores)
-        BotonPrincipal("Cultivos", onIrCultivos)
-        BotonPrincipal("Mis tareas", onIrTareas)
-        BotonSecundario("Cerrar sesión", onCerrarSesion)
+        Text(
+            text = "¿Qué deseas revisar?",
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        BotonPrincipal(
+            texto = "Mi perfil",
+            onClick = onIrPerfil
+        )
+
+        BotonPrincipal(
+            texto = "Sectores del huerto",
+            onClick = onIrSectores
+        )
+
+        BotonPrincipal(
+            texto = "Cultivos",
+            onClick = onIrCultivos
+        )
+
+        BotonPrincipal(
+            texto = "Mis tareas",
+            onClick = onIrTareas
+        )
+
+        if (rol == RolUsuario.ADMINISTRADOR) {
+            BotonPrincipal(
+                texto = "Validar tareas",
+                onClick = onIrValidarTareas
+            )
+        }
+
+        BotonPrincipal(
+            texto = "Problemas",
+            onClick = onIrProblemas
+        )
+
+        BotonPrincipal(
+            texto = "Alertas",
+            onClick = onIrAlertas
+        )
+
+        BotonPrincipal(
+            texto = "Sensores",
+            onClick = onIrSensores
+        )
+
+        BotonPrincipal(
+            texto = "Historial",
+            onClick = onIrHistorial
+        )
+
+        BotonSecundario(
+            texto = "Cerrar sesión",
+            onClick = onCerrarSesion
+        )
     }
 }

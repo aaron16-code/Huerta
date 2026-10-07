@@ -20,6 +20,12 @@ import cl.duoc.huertoescolar.ui.screens.cultivos.DetalleCultivoScreen
 import cl.duoc.huertoescolar.ui.screens.cultivos.EditarCultivoScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.DetalleSectorScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.EditarSectorScreen
+import cl.duoc.huertoescolar.ui.screens.alertas.AlertasScreen
+import cl.duoc.huertoescolar.ui.screens.historial.HistorialScreen
+import cl.duoc.huertoescolar.ui.screens.perfil.PerfilScreen
+import cl.duoc.huertoescolar.ui.screens.problemas.ProblemasScreen
+import cl.duoc.huertoescolar.ui.screens.sensores.SensoresScreen
+import cl.duoc.huertoescolar.ui.screens.tareas.ValidarTareasScreen
 
 @Composable
 fun Navegacion(modifier: Modifier = Modifier) {
@@ -52,6 +58,9 @@ fun Navegacion(modifier: Modifier = Modifier) {
             rolSeleccionado?.let { rol ->
                 InicioScreen(
                     rol = rol,
+                    onIrPerfil = {
+                        navController.navigate(Rutas.PERFIL)
+                    },
                     onIrSectores = {
                         navController.navigate(Rutas.SECTORES)
                     },
@@ -60,6 +69,21 @@ fun Navegacion(modifier: Modifier = Modifier) {
                     },
                     onIrTareas = {
                         navController.navigate(Rutas.TAREAS)
+                    },
+                    onIrValidarTareas = {
+                        navController.navigate(Rutas.VALIDAR_TAREAS)
+                    },
+                    onIrProblemas = {
+                        navController.navigate(Rutas.PROBLEMAS)
+                    },
+                    onIrAlertas = {
+                        navController.navigate(Rutas.ALERTAS)
+                    },
+                    onIrSensores = {
+                        navController.navigate(Rutas.SENSORES)
+                    },
+                    onIrHistorial = {
+                        navController.navigate(Rutas.HISTORIAL)
                     },
                     onCerrarSesion = {
                         rolSeleccionado = null
@@ -173,5 +197,57 @@ fun Navegacion(modifier: Modifier = Modifier) {
                 onVolver = { navController.popBackStack() }
             )
         }
+
+        composable(Rutas.PERFIL) {
+            rolSeleccionado?.let { rol ->
+                PerfilScreen(
+                    rol = rol,
+                    onVolver = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable(Rutas.VALIDAR_TAREAS) {
+            ValidarTareasScreen(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Rutas.PROBLEMAS) {
+            ProblemasScreen(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Rutas.ALERTAS) {
+            AlertasScreen(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Rutas.SENSORES) {
+            SensoresScreen(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Rutas.HISTORIAL) {
+            HistorialScreen(
+                onVolver = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
     }
 }
