@@ -33,6 +33,14 @@ object RepositorioOperacion {
 
     fun obtenerTarea(id: Int): Tarea? = _tareas.value.find { it.id == id }
 
+    // Tarea elegida en la lista (mismo estilo que RepositorioHuerto.seleccionarSector)
+    var tareaSeleccionadaId: Int? = null
+        private set
+
+    fun seleccionarTarea(id: Int) {
+        tareaSeleccionadaId = id
+    }
+
     /** Tareas de un estudiante: las suyas o las de su grupo. */
     fun tareasDe(usuarioId: Int, grupo: String): List<Tarea> =
         _tareas.value.filter {
