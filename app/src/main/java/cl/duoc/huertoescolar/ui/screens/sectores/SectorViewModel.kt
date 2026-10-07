@@ -8,7 +8,13 @@ import cl.duoc.huertoescolar.EstadoSector
 import cl.duoc.huertoescolar.RepositorioHuerto
 import cl.duoc.huertoescolar.Sector
 
+
 class SectorViewModel : ViewModel() {
+
+
+
+
+
 
     var nombre by mutableStateOf("")
     var descripcion by mutableStateOf("")
@@ -50,4 +56,6 @@ class SectorViewModel : ViewModel() {
         RepositorioHuerto.agregarSector(nuevoSector)
         return true
     }
+
+
 }

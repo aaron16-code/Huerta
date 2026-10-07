@@ -26,3 +26,26 @@ data class Sector(
     val estado: EstadoSector,
     val responsable: String
 )
+
+enum class EstadoCultivo {
+    PLANIFICADO,
+    SEMBRADO,
+    EN_CRECIMIENTO,
+    LISTO_PARA_COSECHAR,
+    COSECHADO,
+    CON_PROBLEMAS,
+    FINALIZADO
+}
+
+data class Cultivo(
+    val id: Int,
+    val nombre: String,
+    val descripcion: String,
+    val sectorId: Int,
+    val fechaSiembra: String,
+    val fechaCosechaEstimada: String,
+    val frecuenciaRiegoDias: Int,
+    val estado: EstadoCultivo = EstadoCultivo.PLANIFICADO,
+    val observaciones: String = "",
+    val fotoUri: String? = null
+)

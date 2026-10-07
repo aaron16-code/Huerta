@@ -6,6 +6,50 @@ import androidx.compose.runtime.setValue
 
 object RepositorioHuerto {
 
+
+    var cultivos by mutableStateOf(
+        listOf(
+            Cultivo(
+                id = 1,
+                nombre = "Lechugas",
+                descripcion = "Cultivo de prueba",
+                sectorId = 1,
+                fechaSiembra = "01/10/2026",
+                fechaCosechaEstimada = "30/11/2026",
+                frecuenciaRiegoDias = 2,
+                estado = EstadoCultivo.EN_CRECIMIENTO,
+                observaciones = "Crecimiento normal"
+            )
+        )
+    )
+        private set
+
+    var cultivoSeleccionado by mutableStateOf<Cultivo?>(null)
+        private set
+
+    fun agregarCultivo(cultivo: Cultivo) {
+        cultivos = cultivos + cultivo
+    }
+
+    fun obtenerSiguienteIdCultivo(): Int {
+        return (cultivos.maxOfOrNull { it.id } ?: 0) + 1
+    }
+
+    fun seleccionarCultivo(cultivo: Cultivo) {
+        cultivoSeleccionado = cultivo
+    }
+
+    fun actualizarCultivo(cultivoActualizado: Cultivo) {
+        cultivos = cultivos.map { cultivo ->
+            if (cultivo.id == cultivoActualizado.id) {
+                cultivoActualizado
+            } else {
+                cultivo
+            }
+        }
+
+        cultivoSeleccionado = null
+    }
     var sectores by mutableStateOf(
         listOf(
             Sector(

@@ -1,18 +1,16 @@
 package cl.duoc.huertoescolar.ui.screens.home
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import cl.duoc.huertoescolar.RolUsuario
-
+import cl.duoc.huertoescolar.ui.components.BotonPrincipal
+import cl.duoc.huertoescolar.ui.components.BotonSecundario
+import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
+import cl.duoc.huertoescolar.ui.components.PantallaHuerto
+import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
 
 @Composable
 fun InicioScreen(
@@ -22,54 +20,30 @@ fun InicioScreen(
     onIrTareas: () -> Unit,
     onCerrarSesion: () -> Unit,
     modifier: Modifier = Modifier
-
-
 ) {
-    Column(
+    val nombrePerfil = if (rol == RolUsuario.ADMINISTRADOR) "Docente" else "Estudiante"
+
+    PantallaHuerto(
+        titulo = "Huerto Escolar",
+        subtitulo = "Organiza los cultivos y revisa el trabajo del huerto.",
         modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Huerto Escolar",
-
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Text(
-            text = if (rol == RolUsuario.ADMINISTRADOR) {
-                "Perfil: Docente"
-            } else {
-                "Perfil: Estudiante"
-            }
-        )
-
-        Text(
-            text = "Organiza los cultivos y las tareas del huerto"
-        )
-
-        Button(
-            onClick = onIrSectores,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Sectores")
+        TarjetaHuerto {
+            Text("Sesión activa", style = MaterialTheme.typography.titleMedium)
+            EtiquetaEstado(texto = nombrePerfil)
+            Text(
+                text = if (rol == RolUsuario.ADMINISTRADOR) {
+                    "Puedes administrar sectores, cultivos y actividades."
+                } else {
+                    "Puedes consultar información y completar tus tareas asignadas."
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-
-        Button(
-            onClick = onIrCultivos,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Cultivos")
-        }
-        Button(
-            onClick = onCerrarSesion,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Cerrar sesión")
-        }
-
-
+        Text("¿Qué deseas revisar?", style = MaterialTheme.typography.titleLarge)
+        BotonPrincipal("Sectores del huerto", onIrSectores)
+        BotonPrincipal("Cultivos", onIrCultivos)
+        BotonPrincipal("Mis tareas", onIrTareas)
+        BotonSecundario("Cerrar sesión", onCerrarSesion)
     }
-
 }
