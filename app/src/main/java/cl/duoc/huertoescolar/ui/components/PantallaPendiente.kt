@@ -1,15 +1,8 @@
 package cl.duoc.huertoescolar.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 
 @Composable
 fun PantallaPendiente(
@@ -17,21 +10,13 @@ fun PantallaPendiente(
     onVolver: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    PantallaHuerto(
+        titulo = titulo,
+        onVolver = onVolver,
         modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = titulo,
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Text("Pantalla en construcción")
-
-        Button(onClick = onVolver) {
-            Text("Volver")
+        TarjetaHuerto {
+            Text("Esta pantalla está preparada para agregar su formulario y funcionalidad.")
         }
     }
 }

@@ -82,6 +82,14 @@ fun Navegacion(modifier: Modifier = Modifier) {
                     onCrearSector = {
                         navController.navigate(Rutas.CREAR_SECTOR)
                     },
+                    onEditarSector = { sector ->
+                        RepositorioHuerto.seleccionarSector(sector)
+                        navController.navigate(Rutas.EDITAR_SECTOR)
+                    },
+                    onVerDetalle = { sector ->
+                        RepositorioHuerto.seleccionarSector(sector)
+                        navController.navigate(Rutas.DETALLE_SECTOR)
+                    },
                     onVolver = {
                         navController.popBackStack()
                     }
@@ -109,7 +117,12 @@ fun Navegacion(modifier: Modifier = Modifier) {
 
         composable(Rutas.EDITAR_SECTOR) {
             EditarSectorScreen(
-                onVolver = { navController.popBackStack() }
+                onSectorActualizado = {
+                    navController.popBackStack()
+                },
+                onVolver = {
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -126,10 +139,12 @@ fun Navegacion(modifier: Modifier = Modifier) {
                     onCrearCultivo = {
                         navController.navigate(Rutas.CREAR_CULTIVO)
                     },
-                    onEditarCultivo = {
+                    onEditarCultivo = { cultivo ->
+                        RepositorioHuerto.seleccionarCultivo(cultivo)
                         navController.navigate(Rutas.EDITAR_CULTIVO)
                     },
-                    onVerDetalle = {
+                    onVerDetalle = { cultivo ->
+                        RepositorioHuerto.seleccionarCultivo(cultivo)
                         navController.navigate(Rutas.DETALLE_CULTIVO)
                     },
                     onVolver = {
@@ -141,12 +156,14 @@ fun Navegacion(modifier: Modifier = Modifier) {
 
         composable(Rutas.CREAR_CULTIVO) {
             CrearCultivoScreen(
+                onCultivoCreado = { navController.popBackStack() },
                 onVolver = { navController.popBackStack() }
             )
         }
 
         composable(Rutas.EDITAR_CULTIVO) {
             EditarCultivoScreen(
+                onCultivoActualizado = { navController.popBackStack() },
                 onVolver = { navController.popBackStack() }
             )
         }

@@ -1,19 +1,14 @@
 package cl.duoc.huertoescolar
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-
+import cl.duoc.huertoescolar.ui.components.BotonPrincipal
+import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
+import cl.duoc.huertoescolar.ui.components.PantallaHuerto
+import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
 
 @Composable
 fun TareasScreen(
@@ -22,40 +17,31 @@ fun TareasScreen(
     tareasViewModel: TareasViewModel = viewModel()
 ) {
     val tarea = tareasViewModel.tarea
+    val estadoTexto = when (tarea.estado) {
+        EstadoTarea.PENDIENTE -> "Pendiente"
+        EstadoTarea.PENDIENTE_VALIDACION -> "Pendiente de validación"
+        EstadoTarea.VALIDADA -> "Validada"
+        EstadoTarea.RECHAZADA -> "Rechazada"
+    }
 
-    Column(
+    PantallaHuerto(
+        titulo = "Mis tareas",
+        subtitulo = "Revisa las instrucciones y registra tu avance",
+        onVolver = onVolver,
         modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = tarea.titulo,
-            style = MaterialTheme.typography.headlineMedium
-        )
+        TarjetaHuerto {
+            Text(tarea.titulo, style = MaterialTheme.typography.titleLarge)
+            EtiquetaEstado(estadoTexto)
+            Text("Sector: ${tarea.sector}")
+            Text("Responsable: ${tarea.responsable}")
+            Text("Instrucciones: ${tarea.instrucciones}")
 
-        Text("Sector: ${tarea.sector}")
-        Text("Responsable: ${tarea.responsable}")
-        Text("Instrucciones: ${tarea.instrucciones}")
-
-        val estadoTexto = when (tarea.estado) {
-            EstadoTarea.PENDIENTE -> "Pendiente"
-            EstadoTarea.PENDIENTE_VALIDACION -> "Pendiente de validación"
-            EstadoTarea.VALIDADA -> "Validada"
-            EstadoTarea.RECHAZADA -> "Rechazada"
-        }
-
-        Text("Estado: $estadoTexto")
-
-        Button(
-            onClick = { tareasViewModel.enviarAValidacion() },
-            enabled = tarea.estado == EstadoTarea.PENDIENTE
-        ) {
-            Text("Enviar a validación")
-        }
-
-        Button(onClick = onVolver) {
-            Text("Volver")
+            BotonPrincipal(
+                texto = "Enviar a validación",
+                onClick = { tareasViewModel.enviarAValidacion() },
+                enabled = tarea.estado == EstadoTarea.PENDIENTE
+            )
         }
     }
 }
