@@ -10,6 +10,7 @@ import cl.duoc.huertoescolar.data.nombreDeSector
 import cl.duoc.huertoescolar.ui.screens.alertas.PanelAlertasScreen
 import cl.duoc.huertoescolar.ui.screens.problemas.ListaProblemasScreen
 import cl.duoc.huertoescolar.ui.screens.problemas.ReportarProblemaScreen
+import cl.duoc.huertoescolar.ui.screens.sensores.PanelSensoresScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.DetalleTareaScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.ListaTareasScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.PanelValidacionScreen
@@ -103,5 +104,16 @@ fun NavGraphBuilder.grafoOperacion(
         }
     }
 
-    // Más adelante se agregan aquí: SENSORES e HISTORIAL.
+    // Sensores simulados (solo docente; siempre como dato de prueba)
+    composable(Rutas.SENSORES) {
+        rolActual()?.let { rol ->
+            PanelSensoresScreen(
+                usuario = UsuariosPrueba.porRol(rol),
+                onVolver = { navController.popBackStack() },
+                nombreSector = ::nombreDeSector
+            )
+        }
+    }
+
+    // Más adelante se agrega aquí: HISTORIAL.
 }
