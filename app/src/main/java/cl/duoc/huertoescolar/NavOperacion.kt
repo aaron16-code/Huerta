@@ -7,6 +7,7 @@ import cl.duoc.huertoescolar.data.RepositorioOperacion
 import cl.duoc.huertoescolar.data.UsuariosPrueba
 import cl.duoc.huertoescolar.data.nombreDeCultivo
 import cl.duoc.huertoescolar.data.nombreDeSector
+import cl.duoc.huertoescolar.ui.screens.alertas.PanelAlertasScreen
 import cl.duoc.huertoescolar.ui.screens.problemas.ListaProblemasScreen
 import cl.duoc.huertoescolar.ui.screens.problemas.ReportarProblemaScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.DetalleTareaScreen
@@ -91,5 +92,16 @@ fun NavGraphBuilder.grafoOperacion(
         }
     }
 
-    // Más adelante se agregan aquí: ALERTAS, SENSORES e HISTORIAL.
+    // Alertas y recordatorios (informativos)
+    composable(Rutas.ALERTAS) {
+        rolActual()?.let { rol ->
+            PanelAlertasScreen(
+                usuario = UsuariosPrueba.porRol(rol),
+                onVolver = { navController.popBackStack() },
+                nombreSector = ::nombreDeSector
+            )
+        }
+    }
+
+    // Más adelante se agregan aquí: SENSORES e HISTORIAL.
 }
