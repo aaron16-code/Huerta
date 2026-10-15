@@ -8,6 +8,7 @@ import cl.duoc.huertoescolar.data.UsuariosPrueba
 import cl.duoc.huertoescolar.data.nombreDeCultivo
 import cl.duoc.huertoescolar.data.nombreDeSector
 import cl.duoc.huertoescolar.ui.screens.alertas.PanelAlertasScreen
+import cl.duoc.huertoescolar.ui.screens.historial.ListaHistorialScreen
 import cl.duoc.huertoescolar.ui.screens.problemas.ListaProblemasScreen
 import cl.duoc.huertoescolar.ui.screens.problemas.ReportarProblemaScreen
 import cl.duoc.huertoescolar.ui.screens.sensores.PanelSensoresScreen
@@ -115,5 +116,14 @@ fun NavGraphBuilder.grafoOperacion(
         }
     }
 
-    // Más adelante se agrega aquí: HISTORIAL.
+    // Historial cronológico (docente ve todo; estudiante, solo lo suyo)
+    composable(Rutas.HISTORIAL) {
+        rolActual()?.let { rol ->
+            ListaHistorialScreen(
+                usuario = UsuariosPrueba.porRol(rol),
+                onVolver = { navController.popBackStack() },
+                nombreSector = ::nombreDeSector
+            )
+        }
+    }
 }
