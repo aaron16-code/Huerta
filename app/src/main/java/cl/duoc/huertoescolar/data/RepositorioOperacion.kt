@@ -1,6 +1,10 @@
 package cl.duoc.huertoescolar.data
 
 import cl.duoc.huertoescolar.RolUsuario
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -8,7 +12,8 @@ import kotlinx.coroutines.flow.update
 
 /**
  * Repositorio en memoria (Persona B): tareas, problemas y lecturas simuladas.
- * Todo es ficticio. Más adelante se puede reemplazar por Room sin tocar las pantallas.
+ * Todo es ficticio. Trabaja en memoria y, si se activa la persistencia (Room), guarda una copia
+ * de cada cambio y la carga al abrir la app. Las pruebas unitarias corren sin persistencia.
  * IDs fijos acordados: usuarios 1=docente, 2 y 3=estudiantes; sectores 1-3; cultivos 1-4.
  * Usa `RolUsuario` (ADMINISTRADOR, ESTUDIANTE) definido en Modelos.kt del proyecto.
  */
@@ -28,6 +33,46 @@ object RepositorioOperacion {
 
     private val _lecturas = MutableStateFlow(semillaLecturas())
     val lecturas: StateFlow<List<LecturaSensor>> = _lecturas.asStateFlow()
+
+    // ---------- PERSISTENCIA (Room) ----------
+
+    @Volatile
+    private var persistencia: PersistenciaOperacion? = null
+    private val alcance = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * Activa el guardado. Si ya hay datos guardados los carga; si no, guarda los de ejemplo.
+     * Si algo falla, la app sigue funcionando en memoria. Sin llamarla (pruebas) todo es en memoria.
+     */
+    fun iniciarPersistencia(destino: PersistenciaOperacion) {
+        if (persistencia != null) return
+        persistencia = destino
+        alcance.launch {
+            try {
+                val guardado = destino.cargar()
+                if (guardado == null) {
+                    destino.guardarSemilla(DatosOperacion(_tareas.value, _problemas.value, _lecturas.value))
+                } else {
+                    _tareas.value = guardado.tareas
+                    _problemas.value = guardado.problemas
+                    _lecturas.value = guardado.lecturas
+                }
+            } catch (e: Throwable) {
+                persistencia = null // si Room falla, se sigue en memoria
+            }
+        }
+    }
+
+    private fun guardar(bloque: suspend (PersistenciaOperacion) -> Unit) {
+        val destino = persistencia ?: return
+        alcance.launch {
+            try {
+                bloque(destino)
+            } catch (e: Throwable) {
+                // si no se pudo guardar, el dato sigue en memoria
+            }
+        }
+    }
 
     // ---------- TAREAS ----------
 
@@ -54,7 +99,9 @@ object RepositorioOperacion {
         if (nueva.responsableUsuarioId == null && nueva.grupoAsignado.isNullOrBlank())
             return fallo("Asigna la tarea a un estudiante o a un grupo")
         val id = (_tareas.value.maxOfOrNull { it.id } ?: 0) + 1
-        _tareas.update { it + nueva.copy(id = id, fechaCreacion = System.currentTimeMillis(), estado = EstadoTarea.PENDIENTE) }
+        val creada = nueva.copy(id = id, fechaCreacion = System.currentTimeMillis(), estado = EstadoTarea.PENDIENTE)
+        _tareas.update { it + creada }
+        guardar { it.insertarTarea(creada) }
         return Result.success(Unit)
     }
 
@@ -99,17 +146,19 @@ object RepositorioOperacion {
         return Result.success(Unit)
     }
 
-    private fun actualizarTarea(id: Int, cambio: (Tarea) -> Tarea) =
+    private fun actualizarTarea(id: Int, cambio: (Tarea) -> Tarea) {
         _tareas.update { lista -> lista.map { if (it.id == id) cambio(it) else it } }
+        obtenerTarea(id)?.let { t -> guardar { it.actualizarTarea(t) } }
+    }
 
     // ---------- PROBLEMAS ----------
 
     fun reportarProblema(sectorId: Int, cultivoId: Int?, tipo: TipoProblema, descripcion: String, reportanteId: Int, fotoUri: String?): Result<Unit> {
         if (descripcion.isBlank()) return fallo("Describe brevemente el problema")
         val id = (_problemas.value.maxOfOrNull { it.id } ?: 0) + 1
-        _problemas.update {
-            it + Problema(id, sectorId, cultivoId, tipo, descripcion, System.currentTimeMillis(), reportanteId, fotoUri)
-        }
+        val nuevo = Problema(id, sectorId, cultivoId, tipo, descripcion, System.currentTimeMillis(), reportanteId, fotoUri)
+        _problemas.update { it + nuevo }
+        guardar { it.insertarProblema(nuevo) }
         return Result.success(Unit)
     }
 
@@ -125,6 +174,7 @@ object RepositorioOperacion {
                 )
             }
         }
+        _problemas.value.find { it.id == id }?.let { p -> guardar { it.actualizarProblema(p) } }
         return Result.success(Unit)
     }
 
@@ -192,8 +242,8 @@ object RepositorioOperacion {
         Tarea(5, TipoTarea.RIEGO, "Regar la albahaca del invernadero", "Un vaso de agua por maceta.",
             3, 4, enDias(-1), enDias(1), grupoAsignado = "Taller Huerto A", creadaPorId = 1),
         Tarea(6, TipoTarea.LIMPIEZA, "Limpiar el sector sur", "Recoge hojas secas y restos.",
-            2, null, enDias(-7), enDias(-3), responsableUsuarioId = 3, creadaPorId = 1,
-            estado = EstadoTarea.RECHAZADA, fechaRealizacion = enDias(-3), realizadaPorId = 3,
+            2, null, enDias(-7), enDias(-3), responsableUsuarioId = 2, creadaPorId = 1,
+            estado = EstadoTarea.RECHAZADA, fechaRealizacion = enDias(-3), realizadaPorId = 2,
             comentarioEstudiante = "Terminé.", comentarioDocente = "Faltó retirar los restos del fondo. Repítela.",
             validadorId = 1, fechaValidacion = enDias(-2)),
         Tarea(7, TipoTarea.MANTENIMIENTO, "Revisar la tapa del invernadero", "Revisa que cierre bien y avisa si ves daños.",
