@@ -18,9 +18,18 @@ import cl.duoc.huertoescolar.data.Problema
 import cl.duoc.huertoescolar.data.Tarea
 import cl.duoc.huertoescolar.data.TipoProblema
 import cl.duoc.huertoescolar.data.TipoTarea
+import cl.duoc.huertoescolar.data.local.CultivoEntity
+import cl.duoc.huertoescolar.data.local.EvidenciaEntity
+import cl.duoc.huertoescolar.data.local.HuertoDao
+import cl.duoc.huertoescolar.data.local.ReporteProblemaEntity
+import cl.duoc.huertoescolar.data.local.SectorEntity
+import cl.duoc.huertoescolar.data.local.TareaEntity
+import cl.duoc.huertoescolar.data.local.UsuarioEntity
+import cl.duoc.huertoescolar.data.local.ValidacionEntity
 
-// Base de datos APARTE de la de sectores y cultivos, con nombres propios ("op_..."),
-// para no mezclarse con las tablas del otro integrante. Las fechas se guardan como Long.
+// Una sola base Room para todos los módulos del huerto.
+// Las tablas "op_..." conservan la estructura creada para tareas, problemas y lecturas.
+// Las fechas de esas tablas se guardan como Long.
 
 @Entity(tableName = "op_tareas")
 data class TareaOpEntity(
@@ -109,12 +118,24 @@ interface OperacionDao {
 }
 
 @Database(
-    entities = [TareaOpEntity::class, ProblemaOpEntity::class, LecturaOpEntity::class],
+    entities = [
+        UsuarioEntity::class,
+        SectorEntity::class,
+        CultivoEntity::class,
+        TareaEntity::class,
+        EvidenciaEntity::class,
+        ValidacionEntity::class,
+        ReporteProblemaEntity::class,
+        TareaOpEntity::class,
+        ProblemaOpEntity::class,
+        LecturaOpEntity::class
+    ],
     version = 1,
     exportSchema = false
 )
 abstract class OperacionDatabase : RoomDatabase() {
     abstract fun operacionDao(): OperacionDao
+    abstract fun huertoDao(): HuertoDao
 
     companion object {
         @Volatile
@@ -125,7 +146,7 @@ abstract class OperacionDatabase : RoomDatabase() {
                 Room.databaseBuilder(
                     context.applicationContext,
                     OperacionDatabase::class.java,
-                    "operacion.db"
+                    "huerto_escolar_unificado.db"
                 )
                     .build()
                     .also { INSTANCE = it }

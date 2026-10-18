@@ -1,20 +1,32 @@
 package cl.duoc.huertoescolar.ui.screens.tareas
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import cl.duoc.huertoescolar.ui.components.BotonSecundario
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
 
-/**
- * Selector de foto con el Photo Picker de Android (PickVisualMedia), como se vio en clases.
- * No pide permisos: el usuario elige una foto y la app recibe solo una referencia (URI) a ella.
- * La cámara es opcional según el caso, por eso aquí solo se elige de la galería.
- */
 @Composable
 fun SelectorFotoGaleria(
     fotoUri: String?,
@@ -22,15 +34,34 @@ fun SelectorFotoGaleria(
     modifier: Modifier = Modifier,
     onQuitarFoto: (() -> Unit)? = null
 ) {
+    val contexto = LocalContext.current
+    var uriPendienteTexto by rememberSaveable { mutableStateOf<String?>(null) }
+
     val selector = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) {
-            onFotoSeleccionada(uri.toString())
+        if (uri != null) onFotoSeleccionada(uri.toString())
+    }
+
+    val camara = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { exito ->
+        if (exito) {
+            uriPendienteTexto?.let(onFotoSeleccionada)
         }
+        uriPendienteTexto = null
     }
 
     val hayFoto = !fotoUri.isNullOrBlank()
+    val colorBoton by animateColorAsState(
+        targetValue = if (hayFoto) {
+            MaterialTheme.colorScheme.tertiary
+        } else {
+            MaterialTheme.colorScheme.primary
+        },
+        animationSpec = tween(durationMillis = 600),
+        label = "Color del botón de fotografía"
+    )
 
     TarjetaHuerto(modifier = modifier) {
         Text("Foto del avance (opcional)", style = MaterialTheme.typography.titleMedium)
@@ -40,18 +71,49 @@ fun SelectorFotoGaleria(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        if (hayFoto) {
-            FotoEvidencia(fotoUri)
-        } else {
-            Text("Todavía no hay una foto seleccionada")
+        Crossfade(
+            targetState = hayFoto,
+            label = "Estado de fotografía"
+        ) { tieneFoto ->
+            Text(
+                if (tieneFoto) {
+                    "Fotografía preparada"
+                } else {
+                    "Selecciona una fotografía o toma una nueva"
+                }
+            )
         }
 
-        BotonSecundario(
-            texto = if (hayFoto) "Cambiar foto" else "Seleccionar foto",
+        AnimatedVisibility(
+            visible = hayFoto,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            FotoEvidencia(fotoUri)
+        }
+
+        Button(
             onClick = {
                 selector.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = colorBoton)
+        ) {
+            Text(if (hayFoto) "Cambiar foto" else "Seleccionar foto")
+        }
+
+        BotonSecundario(
+            texto = "Tomar fotografía",
+            onClick = {
+                try {
+                    val nuevaUri: Uri = crearUriFotografia(contexto)
+                    uriPendienteTexto = nuevaUri.toString()
+                    camara.launch(nuevaUri)
+                } catch (_: Exception) {
+                    uriPendienteTexto = null
+                }
             }
         )
 

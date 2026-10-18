@@ -77,7 +77,7 @@ fun CrearCultivoScreen(
                 placeholder = { Text("DD/MM/AAAA") },
                 isError = cultivoViewModel.errorFechaSiembra,
                 supportingText = {
-                    if (cultivoViewModel.errorFechaSiembra) Text("Ingresa la fecha de siembra")
+                    if (cultivoViewModel.errorFechaSiembra) Text("Usa una fecha válida: DD/MM/AAAA")
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -89,7 +89,9 @@ fun CrearCultivoScreen(
                 placeholder = { Text("DD/MM/AAAA") },
                 isError = cultivoViewModel.errorFechaCosecha,
                 supportingText = {
-                    if (cultivoViewModel.errorFechaCosecha) Text("Ingresa la fecha estimada")
+                    if (cultivoViewModel.errorFechaCosecha) {
+                        Text("Usa una fecha válida posterior o igual a la siembra")
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             )

@@ -10,7 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import cl.duoc.huertoescolar.RolUsuario
+import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.screens.login.LoginScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.SectoresScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.CrearSectorScreen
@@ -26,8 +26,8 @@ import cl.duoc.huertoescolar.ui.screens.perfil.PerfilScreen
 fun Navegacion(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
-    var rolSeleccionado by remember {
-        mutableStateOf<RolUsuario?>(null)
+    var usuarioSeleccionado by remember {
+        mutableStateOf<UsuarioPrueba?>(null)
     }
 
     NavHost(
@@ -37,8 +37,8 @@ fun Navegacion(modifier: Modifier = Modifier) {
     ) {
         composable(Rutas.LOGIN) {
             LoginScreen(
-                onIngresar = { rol ->
-                    rolSeleccionado = rol
+                onIngresar = { usuario ->
+                    usuarioSeleccionado = usuario
 
                     navController.navigate(Rutas.INICIO) {
                         popUpTo(Rutas.LOGIN) {
@@ -50,9 +50,9 @@ fun Navegacion(modifier: Modifier = Modifier) {
         }
 
         composable(Rutas.INICIO) {
-            rolSeleccionado?.let { rol ->
+            usuarioSeleccionado?.let { usuario ->
                 InicioScreen(
-                    rol = rol,
+                    rol = usuario.rol,
                     onIrPerfil = {
                         navController.navigate(Rutas.PERFIL)
                     },
@@ -81,7 +81,7 @@ fun Navegacion(modifier: Modifier = Modifier) {
                         navController.navigate(Rutas.HISTORIAL)
                     },
                     onCerrarSesion = {
-                        rolSeleccionado = null
+                        usuarioSeleccionado = null
 
                         navController.navigate(Rutas.LOGIN) {
                             popUpTo(Rutas.INICIO) {
@@ -95,9 +95,9 @@ fun Navegacion(modifier: Modifier = Modifier) {
         }
 
         composable(Rutas.SECTORES) {
-            rolSeleccionado?.let { rol ->
+            usuarioSeleccionado?.let { usuario ->
                 SectoresScreen(
-                    rol = rol,
+                    rol = usuario.rol,
                     onCrearSector = {
                         navController.navigate(Rutas.CREAR_SECTOR)
                     },
@@ -145,9 +145,9 @@ fun Navegacion(modifier: Modifier = Modifier) {
         }
 
         composable(Rutas.CULTIVOS) {
-            rolSeleccionado?.let { rol ->
+            usuarioSeleccionado?.let { usuario ->
                 CultivosScreen(
-                    rol = rol,
+                    rol = usuario.rol,
                     onCrearCultivo = {
                         navController.navigate(Rutas.CREAR_CULTIVO)
                     },
@@ -187,9 +187,9 @@ fun Navegacion(modifier: Modifier = Modifier) {
         }
 
         composable(Rutas.PERFIL) {
-            rolSeleccionado?.let { rol ->
+            usuarioSeleccionado?.let { usuario ->
                 PerfilScreen(
-                    rol = rol,
+                    usuario = usuario,
                     onVolver = {
                         navController.popBackStack()
                     }
@@ -199,7 +199,7 @@ fun Navegacion(modifier: Modifier = Modifier) {
 
         grafoOperacion(
             navController = navController,
-            rolActual = { rolSeleccionado }
+            usuarioActual = { usuarioSeleccionado }
         )
 
     }

@@ -3,9 +3,11 @@ package cl.duoc.huertoescolar.ui.screens.tareas
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -16,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.huertoescolar.RolUsuario
 import cl.duoc.huertoescolar.data.Tarea
 import cl.duoc.huertoescolar.data.UsuarioPrueba
+import cl.duoc.huertoescolar.data.UsuariosPrueba
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
 import cl.duoc.huertoescolar.ui.components.BotonSecundario
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
@@ -46,6 +49,15 @@ fun GestionTareasScreen(
             TarjetaHuerto { Text("Solo docentes o talleristas autorizados pueden administrar tareas.") }
         } else {
             BotonPrincipal(texto = "Crear y asignar una tarea", onClick = onCrearTarea)
+
+            OutlinedTextField(
+                value = viewModel.busqueda,
+                onValueChange = viewModel::cambiarBusqueda,
+                label = { Text("Buscar por fecha o responsable") },
+                supportingText = { Text("También puedes escribir el tipo o la descripción") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -90,7 +102,10 @@ private fun TarjetaTareaDocente(tarea: Tarea, sector: String, onVerDetalle: () -
 
 /** Texto de a quién está asignada la tarea (estudiante individual o grupo). */
 internal fun textoResponsable(tarea: Tarea): String = when {
-    tarea.responsableUsuarioId != null -> "estudiante ficticio n.° ${tarea.responsableUsuarioId}"
+    tarea.responsableUsuarioId != null -> UsuariosPrueba.todos
+        .find { it.id == tarea.responsableUsuarioId }
+        ?.nombre
+        ?: "estudiante ficticio n.° ${tarea.responsableUsuarioId}"
     !tarea.grupoAsignado.isNullOrBlank() -> "grupo ${tarea.grupoAsignado}"
     else -> "sin asignar"
 }

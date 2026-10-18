@@ -106,10 +106,14 @@ class ModelosOperacionTest {
     // ---------- Usuarios de prueba ----------
 
     @Test
-    fun cada_rol_se_traduce_a_su_usuario_ficticio() {
+    fun existen_un_docente_y_tres_estudiantes_ficticios() {
+        assertEquals(4, UsuariosPrueba.todos.size)
+        assertEquals(3, UsuariosPrueba.estudiantes.size)
+        assertEquals(4, UsuariosPrueba.todos.map { it.id }.distinct().size)
         assertEquals(RolUsuario.ADMINISTRADOR, UsuariosPrueba.porRol(RolUsuario.ADMINISTRADOR).rol)
         assertEquals(1, UsuariosPrueba.porRol(RolUsuario.ADMINISTRADOR).id)
-        assertEquals(RolUsuario.ESTUDIANTE, UsuariosPrueba.porRol(RolUsuario.ESTUDIANTE).rol)
-        assertEquals(2, UsuariosPrueba.porRol(RolUsuario.ESTUDIANTE).id)
+        UsuariosPrueba.estudiantes.forEach {
+            assertEquals(RolUsuario.ESTUDIANTE, it.rol)
+        }
     }
 }

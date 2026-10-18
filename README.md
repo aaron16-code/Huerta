@@ -23,7 +23,14 @@ Proyecto de la asignatura **DSY1105 · Desarrollo de Aplicaciones Móviles** (Du
 
 ## Perfiles
 
-El inicio de sesión es de demostración: se elige el perfil con un botón.
+El inicio de sesión es de demostración: se elige una de estas cuatro cuentas ficticias.
+
+| Cuenta | Rol | Grupo |
+|---|---|---|
+| Profesora Laura | Docente / administradora | — |
+| Sofía Martínez | Estudiante | Taller Huerto A |
+| Tomás González | Estudiante | Taller Huerto A |
+| Valentina Rojas | Estudiante | Taller Huerto B |
 
 | | Estudiante | Docente / tallerista |
 |---|---|---|
@@ -51,26 +58,29 @@ la confirma o la rechaza con un comentario. Nadie puede validar su propia activi
 - **Sensores simulados:** humedad del suelo, temperatura y humedad ambiental, siempre marcados como
   "simulación académica / dato de prueba".
 - **Historial:** tareas realizadas, validaciones y problemas en orden cronológico.
-- **Fotos:** se eligen con el Photo Picker de Android (no requiere permisos).
+- **Fotos:** se pueden seleccionar con Photo Picker o capturar con la aplicación de cámara mediante
+  `TakePicture` y `FileProvider`, sin solicitar acceso general a la galería ni permiso directo de cámara.
+- **Animaciones:** la fotografía aparece y desaparece progresivamente, el mensaje cambia con `Crossfade`
+  y el botón anima su color según exista una imagen.
 
 ## Tecnologías
 
 Kotlin · Jetpack Compose · Material Design 3 · arquitectura MVVM · Navigation Compose · Room ·
-Photo Picker · pruebas unitarias con JUnit · Git y GitHub.
+Photo Picker · cámara con FileProvider · animaciones Compose · pruebas unitarias con JUnit · Git y GitHub.
 
 ## Cómo ejecutarla
 
 1. Abrir el proyecto en Android Studio y esperar a que Gradle sincronice.
 2. Elegir un emulador o un celular Android (minSdk 24) y presionar **Run** (configuración `app`).
-3. En el emulador, para probar las fotos hay que tener alguna imagen en la galería
-   (por ejemplo, sacándola con la app Camera del emulador).
+3. Para probar fotografías se puede elegir una imagen de la galería o utilizar el botón
+   **Tomar fotografía** dentro de una tarea o reporte.
 
 ## Pruebas unitarias
 
 En Android Studio: clic derecho sobre `app/src/test/java/cl/duoc/huertoescolar` y **Run Tests**.
-Son 40 pruebas. Cubren las reglas del caso: validación y rechazo de tareas, permisos por perfil,
+Son 43 pruebas. Cubren las reglas del caso: validación y rechazo de tareas, permisos por perfil,
 tareas atrasadas, estados de las lecturas simuladas, seguimiento de problemas y validaciones del
-formulario de crear tareas.
+formulario de crear tareas, además del formato y orden de las fechas de los cultivos.
 
 ## Estructura
 
@@ -88,8 +98,9 @@ app/src/main/java/cl/duoc/huertoescolar/
 
 Es un **Producto Mínimo Viable académico**, no una plataforma productiva.
 
-- Los sectores y cultivos se guardan con Room. Las tareas, los problemas y las lecturas simuladas
-  viven en memoria durante la sesión y se reinician al cerrar la app.
+- Sectores, cultivos, tareas, evidencias, validaciones, problemas y lecturas se guardan en una sola
+  base Room llamada `huerto_escolar_unificado.db`.
 - Los usuarios son fijos y ficticios; no hay registro ni cuentas reales.
-- Las fotos se refieren por una URI temporal del selector de Android.
+- Las fotografías de cámara se almacenan en la caché privada de la aplicación y Android puede limpiar
+  esos archivos cuando necesita espacio.
 - No se integra ningún sistema externo, sensor físico ni sistema de riego.
