@@ -47,9 +47,13 @@ class ReportarProblemaViewModel : ViewModel() {
         descripcion = texto
     }
 
-    /** Foto ficticia de prueba. Más adelante se reemplaza por la cámara o la galería. */
-    fun adjuntarFotoDePrueba() {
-        fotoUri = "foto_prueba_problema"
+    /** Guarda la foto que eligió el estudiante (viene de SelectorFotoGaleria). */
+    fun elegirFoto(uri: String) {
+        fotoUri = uri
+    }
+
+    fun quitarFoto() {
+        fotoUri = null
     }
 
     /** Valida el formulario y, si está bien, pide la confirmación al usuario. */

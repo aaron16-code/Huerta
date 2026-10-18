@@ -20,9 +20,9 @@ import cl.duoc.huertoescolar.RepositorioHuerto
 import cl.duoc.huertoescolar.data.TipoProblema
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
-import cl.duoc.huertoescolar.ui.components.BotonSecundario
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
+import cl.duoc.huertoescolar.ui.screens.tareas.SelectorFotoGaleria
 
 /** Formulario del estudiante para reportar un problema del huerto. */
 @Composable
@@ -96,14 +96,15 @@ fun ReportarProblemaScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                BotonSecundario(
-                    texto = "Adjuntar foto de prueba",
-                    onClick = viewModel::adjuntarFotoDePrueba
-                )
-                viewModel.fotoUri?.let { Text("Foto adjunta: $it") }
-
-                BotonPrincipal(texto = "Enviar reporte", onClick = viewModel::pedirConfirmacion)
             }
+
+            SelectorFotoGaleria(
+                fotoUri = viewModel.fotoUri,
+                onFotoSeleccionada = viewModel::elegirFoto,
+                onQuitarFoto = viewModel::quitarFoto
+            )
+
+            BotonPrincipal(texto = "Enviar reporte", onClick = viewModel::pedirConfirmacion)
 
             viewModel.mensaje?.let { texto ->
                 Text(

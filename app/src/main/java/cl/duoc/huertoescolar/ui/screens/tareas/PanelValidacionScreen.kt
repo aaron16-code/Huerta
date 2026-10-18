@@ -85,7 +85,7 @@ private fun TarjetaPendiente(
             "Comentario del estudiante: " +
                     tarea.comentarioEstudiante.ifBlank { "sin comentario" }
         )
-        Text("Foto adjunta: ${tarea.fotoUri ?: "sin foto"}")
+        FotoEvidencia(tarea.fotoUri)
 
         OutlinedTextField(
             value = comentario,

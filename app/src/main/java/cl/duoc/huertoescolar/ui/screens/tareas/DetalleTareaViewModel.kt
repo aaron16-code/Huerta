@@ -31,10 +31,14 @@ class DetalleTareaViewModel : ViewModel() {
         comentario = texto
     }
 
-    /** Foto ficticia de prueba. Más adelante se reemplaza por la cámara o la galería. */
-    fun adjuntarFotoDePrueba() {
-        fotoUri = "foto_prueba_tarea_$tareaId"
+    /** Guarda la foto que eligió el estudiante (viene de SelectorFoto). */
+    fun elegirFoto(uri: String) {
+        fotoUri = uri
         mensaje = null
+    }
+
+    fun quitarFoto() {
+        fotoUri = null
     }
 
     fun pedirConfirmacion() {
