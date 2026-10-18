@@ -7,13 +7,13 @@ plugins {
 android {
     namespace = "cl.duoc.huertoescolar"
     compileSdk {
-        version = release(37)
+        version = release(36)
     }
 
     defaultConfig {
         applicationId = "cl.duoc.huertoescolar"
         minSdk = 24
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
