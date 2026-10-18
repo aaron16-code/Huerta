@@ -12,7 +12,9 @@ import cl.duoc.huertoescolar.ui.screens.historial.ListaHistorialScreen
 import cl.duoc.huertoescolar.ui.screens.problemas.ListaProblemasScreen
 import cl.duoc.huertoescolar.ui.screens.problemas.ReportarProblemaScreen
 import cl.duoc.huertoescolar.ui.screens.sensores.PanelSensoresScreen
+import cl.duoc.huertoescolar.ui.screens.tareas.CrearTareaScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.DetalleTareaScreen
+import cl.duoc.huertoescolar.ui.screens.tareas.GestionTareasScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.ListaTareasScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.PanelValidacionScreen
 
@@ -20,6 +22,7 @@ import cl.duoc.huertoescolar.ui.screens.tareas.PanelValidacionScreen
 object RutasOperacion {
     const val DETALLE_TAREA = "detalle_tarea"
     const val REPORTAR_PROBLEMA = "reportar_problema"
+    const val CREAR_TAREA = "crear_tarea"
 }
 
 /**
@@ -34,16 +37,39 @@ fun NavGraphBuilder.grafoOperacion(
     navController: NavController,
     rolActual: () -> RolUsuario?
 ) {
-    // Estudiante: mis tareas
+    // Tareas: el docente gestiona todas (y crea nuevas); el estudiante ve las suyas
     composable(Rutas.TAREAS) {
         rolActual()?.let { rol ->
-            ListaTareasScreen(
+            if (rol == RolUsuario.ADMINISTRADOR) {
+                GestionTareasScreen(
+                    usuario = UsuariosPrueba.porRol(rol),
+                    nombreSector = ::nombreDeSector,
+                    onCrearTarea = { navController.navigate(RutasOperacion.CREAR_TAREA) },
+                    onVerDetalle = { id ->
+                        RepositorioOperacion.seleccionarTarea(id)
+                        navController.navigate(RutasOperacion.DETALLE_TAREA)
+                    },
+                    onVolver = { navController.popBackStack() }
+                )
+            } else {
+                ListaTareasScreen(
+                    usuario = UsuariosPrueba.porRol(rol),
+                    nombreSector = ::nombreDeSector,
+                    onTareaClick = { id ->
+                        RepositorioOperacion.seleccionarTarea(id)
+                        navController.navigate(RutasOperacion.DETALLE_TAREA)
+                    },
+                    onVolver = { navController.popBackStack() }
+                )
+            }
+        }
+    }
+
+    // Docente: formulario para crear y asignar una tarea
+    composable(RutasOperacion.CREAR_TAREA) {
+        rolActual()?.let { rol ->
+            CrearTareaScreen(
                 usuario = UsuariosPrueba.porRol(rol),
-                nombreSector = ::nombreDeSector,
-                onTareaClick = { id ->
-                    RepositorioOperacion.seleccionarTarea(id)
-                    navController.navigate(RutasOperacion.DETALLE_TAREA)
-                },
                 onVolver = { navController.popBackStack() }
             )
         }
