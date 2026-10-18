@@ -14,6 +14,7 @@ import cl.duoc.huertoescolar.ui.theme.HuertoEscolarTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        RepositorioHuerto.inicializar(applicationContext)
         enableEdgeToEdge()
         setContent {
             HuertoEscolarTheme {

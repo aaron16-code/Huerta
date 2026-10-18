@@ -20,12 +20,7 @@ import cl.duoc.huertoescolar.ui.screens.cultivos.DetalleCultivoScreen
 import cl.duoc.huertoescolar.ui.screens.cultivos.EditarCultivoScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.DetalleSectorScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.EditarSectorScreen
-import cl.duoc.huertoescolar.ui.screens.alertas.AlertasScreen
-import cl.duoc.huertoescolar.ui.screens.historial.HistorialScreen
 import cl.duoc.huertoescolar.ui.screens.perfil.PerfilScreen
-import cl.duoc.huertoescolar.ui.screens.problemas.ProblemasScreen
-import cl.duoc.huertoescolar.ui.screens.sensores.SensoresScreen
-import cl.duoc.huertoescolar.ui.screens.tareas.ValidarTareasScreen
 
 @Composable
 fun Navegacion(modifier: Modifier = Modifier) {
@@ -121,13 +116,6 @@ fun Navegacion(modifier: Modifier = Modifier) {
             }
         }
 
-        composable(Rutas.TAREAS) {
-            TareasScreen(
-                onVolver = {
-                    navController.popBackStack()
-                }
-            )
-        }
         composable(Rutas.CREAR_SECTOR) {
             CrearSectorScreen(
                 onSectorCreado = {
@@ -209,45 +197,10 @@ fun Navegacion(modifier: Modifier = Modifier) {
             }
         }
 
-        composable(Rutas.VALIDAR_TAREAS) {
-            ValidarTareasScreen(
-                onVolver = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Rutas.PROBLEMAS) {
-            ProblemasScreen(
-                onVolver = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Rutas.ALERTAS) {
-            AlertasScreen(
-                onVolver = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Rutas.SENSORES) {
-            SensoresScreen(
-                onVolver = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Rutas.HISTORIAL) {
-            HistorialScreen(
-                onVolver = {
-                    navController.popBackStack()
-                }
-            )
-        }
+        grafoOperacion(
+            navController = navController,
+            rolActual = { rolSeleccionado }
+        )
 
     }
 }
