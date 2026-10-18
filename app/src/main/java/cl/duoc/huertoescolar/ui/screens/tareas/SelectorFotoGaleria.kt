@@ -40,7 +40,13 @@ fun SelectorFotoGaleria(
     val selector = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) onFotoSeleccionada(uri.toString())
+        if (uri != null) {
+            runCatching {
+                copiarFotografiaAPersistencia(contexto, uri)
+            }.onSuccess { uriPermanente ->
+                onFotoSeleccionada(uriPermanente.toString())
+            }
+        }
     }
 
     val camara = rememberLauncherForActivityResult(
