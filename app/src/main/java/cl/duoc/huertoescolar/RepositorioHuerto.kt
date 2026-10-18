@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import cl.duoc.huertoescolar.data.local.AppDatabase
 import cl.duoc.huertoescolar.data.local.CultivoEntity
 import cl.duoc.huertoescolar.data.local.HuertoDao
 import cl.duoc.huertoescolar.data.local.SectorEntity
+import cl.duoc.huertoescolar.data.operacion.OperacionDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -36,7 +36,7 @@ object RepositorioHuerto {
         if (inicializado) return
         inicializado = true
 
-        val dao = AppDatabase.getInstance(context).huertoDao()
+        val dao = OperacionDatabase.getInstance(context).huertoDao()
         huertoDao = dao
 
         scope.launch {

@@ -43,7 +43,8 @@ class CultivoViewModel : ViewModel() {
         errorDescripcion = !validarDescripcionCultivo(descripcion)
         errorSector = sectorId == null
         errorFechaSiembra = !validarFechaCultivo(fechaSiembra)
-        errorFechaCosecha = !validarFechaCultivo(fechaCosecha)
+        errorFechaCosecha = !validarFechaCultivo(fechaCosecha) ||
+                !validarOrdenFechasCultivo(fechaSiembra, fechaCosecha)
         errorFrecuencia = !validarFrecuenciaRiego(frecuenciaRiego)
 
         if (

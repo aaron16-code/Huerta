@@ -7,7 +7,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import cl.duoc.huertoescolar.data.RepositorioOperacion
-import cl.duoc.huertoescolar.data.UsuariosPrueba
+import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.data.nombreDeCultivo
 import cl.duoc.huertoescolar.data.nombreDeSector
 import cl.duoc.huertoescolar.data.operacion.PersistenciaRoom
@@ -49,21 +49,21 @@ object RutasOperacion {
  * Registra las pantallas del módulo de operación.
  * Se llama UNA vez dentro del NavHost de Navegacion.kt:
  *
- *     grafoOperacion(navController) { rolSeleccionado }
+ *     grafoOperacion(navController) { usuarioSeleccionado }
  *
- * `rolActual` es una función (y no un valor) para que siempre lea el rol vigente.
+ * `usuarioActual` es una función para que siempre lea la cuenta vigente.
  */
 fun NavGraphBuilder.grafoOperacion(
     navController: NavController,
-    rolActual: () -> RolUsuario?
+    usuarioActual: () -> UsuarioPrueba?
 ) {
     // Tareas: el docente gestiona todas (y crea nuevas); el estudiante ve las suyas
     composable(Rutas.TAREAS) {
         IniciarPersistencia()
-        rolActual()?.let { rol ->
-            if (rol == RolUsuario.ADMINISTRADOR) {
+        usuarioActual()?.let { usuario ->
+            if (usuario.rol == RolUsuario.ADMINISTRADOR) {
                 GestionTareasScreen(
-                    usuario = UsuariosPrueba.porRol(rol),
+                    usuario = usuario,
                     nombreSector = ::nombreDeSector,
                     onCrearTarea = { navController.navigate(RutasOperacion.CREAR_TAREA) },
                     onVerDetalle = { id ->
@@ -74,7 +74,7 @@ fun NavGraphBuilder.grafoOperacion(
                 )
             } else {
                 ListaTareasScreen(
-                    usuario = UsuariosPrueba.porRol(rol),
+                    usuario = usuario,
                     nombreSector = ::nombreDeSector,
                     onTareaClick = { id ->
                         RepositorioOperacion.seleccionarTarea(id)
@@ -89,9 +89,9 @@ fun NavGraphBuilder.grafoOperacion(
     // Docente: formulario para crear y asignar una tarea
     composable(RutasOperacion.CREAR_TAREA) {
         IniciarPersistencia()
-        rolActual()?.let { rol ->
+        usuarioActual()?.let { usuario ->
             CrearTareaScreen(
-                usuario = UsuariosPrueba.porRol(rol),
+                usuario = usuario,
                 onVolver = { navController.popBackStack() }
             )
         }
@@ -100,9 +100,9 @@ fun NavGraphBuilder.grafoOperacion(
     // Estudiante: detalle de una tarea
     composable(RutasOperacion.DETALLE_TAREA) {
         IniciarPersistencia()
-        rolActual()?.let { rol ->
+        usuarioActual()?.let { usuario ->
             DetalleTareaScreen(
-                usuario = UsuariosPrueba.porRol(rol),
+                usuario = usuario,
                 nombreSector = ::nombreDeSector,
                 onVolver = { navController.popBackStack() }
             )
@@ -112,9 +112,9 @@ fun NavGraphBuilder.grafoOperacion(
     // Administrador: validar tareas
     composable(Rutas.VALIDAR_TAREAS) {
         IniciarPersistencia()
-        rolActual()?.let { rol ->
+        usuarioActual()?.let { usuario ->
             PanelValidacionScreen(
-                usuario = UsuariosPrueba.porRol(rol),
+                usuario = usuario,
                 nombreSector = ::nombreDeSector,
                 onVolver = { navController.popBackStack() }
             )
@@ -124,9 +124,9 @@ fun NavGraphBuilder.grafoOperacion(
     // Problemas: lista (estudiante ve los suyos, docente ve todos)
     composable(Rutas.PROBLEMAS) {
         IniciarPersistencia()
-        rolActual()?.let { rol ->
+        usuarioActual()?.let { usuario ->
             ListaProblemasScreen(
-                usuario = UsuariosPrueba.porRol(rol),
+                usuario = usuario,
                 onReportar = { navController.navigate(RutasOperacion.REPORTAR_PROBLEMA) },
                 onVolver = { navController.popBackStack() },
                 nombreSector = ::nombreDeSector,
@@ -138,9 +138,9 @@ fun NavGraphBuilder.grafoOperacion(
     // Problemas: formulario del estudiante
     composable(RutasOperacion.REPORTAR_PROBLEMA) {
         IniciarPersistencia()
-        rolActual()?.let { rol ->
+        usuarioActual()?.let { usuario ->
             ReportarProblemaScreen(
-                usuario = UsuariosPrueba.porRol(rol),
+                usuario = usuario,
                 onVolver = { navController.popBackStack() }
             )
         }
@@ -149,9 +149,9 @@ fun NavGraphBuilder.grafoOperacion(
     // Alertas y recordatorios (informativos)
     composable(Rutas.ALERTAS) {
         IniciarPersistencia()
-        rolActual()?.let { rol ->
+        usuarioActual()?.let { usuario ->
             PanelAlertasScreen(
-                usuario = UsuariosPrueba.porRol(rol),
+                usuario = usuario,
                 onVolver = { navController.popBackStack() },
                 nombreSector = ::nombreDeSector
             )
@@ -161,9 +161,9 @@ fun NavGraphBuilder.grafoOperacion(
     // Sensores simulados (solo docente; siempre como dato de prueba)
     composable(Rutas.SENSORES) {
         IniciarPersistencia()
-        rolActual()?.let { rol ->
+        usuarioActual()?.let { usuario ->
             PanelSensoresScreen(
-                usuario = UsuariosPrueba.porRol(rol),
+                usuario = usuario,
                 onVolver = { navController.popBackStack() },
                 nombreSector = ::nombreDeSector
             )
@@ -173,9 +173,9 @@ fun NavGraphBuilder.grafoOperacion(
     // Historial cronológico (docente ve todo; estudiante, solo lo suyo)
     composable(Rutas.HISTORIAL) {
         IniciarPersistencia()
-        rolActual()?.let { rol ->
+        usuarioActual()?.let { usuario ->
             ListaHistorialScreen(
-                usuario = UsuariosPrueba.porRol(rol),
+                usuario = usuario,
                 onVolver = { navController.popBackStack() },
                 nombreSector = ::nombreDeSector
             )

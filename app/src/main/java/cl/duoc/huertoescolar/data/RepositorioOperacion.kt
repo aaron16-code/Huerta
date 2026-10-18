@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.update
  * Repositorio en memoria (Persona B): tareas, problemas y lecturas simuladas.
  * Todo es ficticio. Trabaja en memoria y, si se activa la persistencia (Room), guarda una copia
  * de cada cambio y la carga al abrir la app. Las pruebas unitarias corren sin persistencia.
- * IDs fijos acordados: usuarios 1=docente, 2 y 3=estudiantes; sectores 1-3; cultivos 1-4.
+ * IDs fijos acordados: usuario 1=docente, 2-4=estudiantes; sectores 1-3; cultivos 1-4.
  * Usa `RolUsuario` (ADMINISTRADOR, ESTUDIANTE) definido en Modelos.kt del proyecto.
  */
 object RepositorioOperacion {
@@ -249,7 +249,7 @@ object RepositorioOperacion {
         Tarea(7, TipoTarea.MANTENIMIENTO, "Revisar la tapa del invernadero", "Revisa que cierre bien y avisa si ves daños.",
             3, null, enDias(-1), enDias(3), responsableUsuarioId = 2, creadaPorId = 1),
         Tarea(8, TipoTarea.COSECHA, "Cosechar la lechuga", "Corta las hojas exteriores con cuidado.",
-            1, 1, enDias(-1), enDias(6), responsableUsuarioId = 3, creadaPorId = 1)
+            1, 1, enDias(-1), enDias(6), responsableUsuarioId = 4, creadaPorId = 1)
     )
 
     private fun semillaProblemas() = listOf(

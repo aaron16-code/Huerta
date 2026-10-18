@@ -73,6 +73,9 @@ fun EditarCultivoScreen(
                 label = { Text("Fecha de siembra") },
                 placeholder = { Text("DD/MM/AAAA") },
                 isError = editarViewModel.errorFechaSiembra,
+                supportingText = {
+                    if (editarViewModel.errorFechaSiembra) Text("Usa una fecha válida: DD/MM/AAAA")
+                },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
@@ -81,6 +84,11 @@ fun EditarCultivoScreen(
                 label = { Text("Cosecha estimada") },
                 placeholder = { Text("DD/MM/AAAA") },
                 isError = editarViewModel.errorFechaCosecha,
+                supportingText = {
+                    if (editarViewModel.errorFechaCosecha) {
+                        Text("Usa una fecha válida posterior o igual a la siembra")
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(

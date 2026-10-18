@@ -4,16 +4,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import cl.duoc.huertoescolar.RolUsuario
+import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
 
 @Composable
 fun PerfilScreen(
-    rol: RolUsuario,
+    usuario: UsuarioPrueba,
     onVolver: () -> Unit
 ) {
-    val nombreRol = if (rol == RolUsuario.ADMINISTRADOR) {
+    val nombreRol = if (usuario.rol == RolUsuario.ADMINISTRADOR) {
         "Docente"
     } else {
         "Estudiante"
@@ -26,18 +27,20 @@ fun PerfilScreen(
     ) {
         TarjetaHuerto {
             Text(
-                text = "Usuario de prueba",
+                text = usuario.nombre,
                 style = MaterialTheme.typography.titleLarge
             )
 
             EtiquetaEstado(texto = nombreRol)
 
-            Text("Nombre: Usuario Huerto Escolar")
-            Text("Correo: usuario@huertoescolar.cl")
+            Text("Nombre: ${usuario.nombre}")
+            if (usuario.grupo.isNotBlank()) {
+                Text("Grupo: ${usuario.grupo}")
+            }
             Text("Establecimiento: Escuela de prueba")
 
             Text(
-                text = if (rol == RolUsuario.ADMINISTRADOR) {
+                text = if (usuario.rol == RolUsuario.ADMINISTRADOR) {
                     "Puede administrar sectores, cultivos y validar actividades."
                 } else {
                     "Puede revisar cultivos y completar las tareas asignadas."

@@ -8,6 +8,7 @@ import cl.duoc.huertoescolar.data.RepositorioOperacion
 import cl.duoc.huertoescolar.data.Tarea
 import cl.duoc.huertoescolar.data.TipoTarea
 import cl.duoc.huertoescolar.data.UsuarioPrueba
+import cl.duoc.huertoescolar.data.UsuariosPrueba
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -47,9 +48,9 @@ internal fun parsearFechaFinDelDia(texto: String): Long? {
 class CrearTareaViewModel : ViewModel() {
 
     // Usuarios y grupo ficticios de los datos de prueba
-    val destinatarios = listOf(
-        Destinatario("Estudiante de prueba (n.° 2)", 2, null),
-        Destinatario("Estudiante ficticio n.° 3", 3, null),
+    val destinatarios = UsuariosPrueba.estudiantes.map { estudiante ->
+        Destinatario(estudiante.nombre, estudiante.id, null)
+    } + listOf(
         Destinatario("Grupo Taller Huerto A", null, "Taller Huerto A")
     )
 
