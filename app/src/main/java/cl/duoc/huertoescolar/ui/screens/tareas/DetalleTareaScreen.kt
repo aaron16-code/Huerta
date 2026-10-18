@@ -1,5 +1,6 @@
 package cl.duoc.huertoescolar.ui.screens.tareas
 
+
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -14,7 +15,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.huertoescolar.data.EstadoTarea
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
-import cl.duoc.huertoescolar.ui.components.BotonSecundario
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
@@ -48,6 +48,7 @@ fun DetalleTareaScreen(
                 Text("Sector: ${nombreSector(tarea.sectorId)}")
                 Text("Fecha programada: ${formatearFecha(tarea.fechaProgramada)}")
                 Text("Instrucciones: ${tarea.instrucciones}")
+                tarea.fotoUri?.let { FotoEvidencia(it) }
             }
 
             if (tarea.comentarioDocente.isNotBlank()) {
@@ -66,16 +67,16 @@ fun DetalleTareaScreen(
                         label = { Text("Comentario (opcional)") },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    BotonSecundario(
-                        texto = "Adjuntar foto de prueba",
-                        onClick = viewModel::adjuntarFotoDePrueba
-                    )
-                    viewModel.fotoUri?.let { Text("Foto adjunta: $it") }
-                    BotonPrincipal(
-                        texto = "Marcar como realizada",
-                        onClick = viewModel::pedirConfirmacion
-                    )
                 }
+                SelectorFotoGaleria(
+                    fotoUri = viewModel.fotoUri,
+                    onFotoSeleccionada = viewModel::elegirFoto,
+                    onQuitarFoto = viewModel::quitarFoto
+                )
+                BotonPrincipal(
+                    texto = "Marcar como realizada",
+                    onClick = viewModel::pedirConfirmacion
+                )
             } else if (tarea.estado == EstadoTarea.PENDIENTE_VALIDACION) {
                 TarjetaHuerto {
                     Text("Enviada. Esperando que un docente la valide.")
