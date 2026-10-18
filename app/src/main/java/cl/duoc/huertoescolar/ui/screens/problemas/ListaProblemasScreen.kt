@@ -19,6 +19,7 @@ import cl.duoc.huertoescolar.ui.components.BotonSecundario
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
+import cl.duoc.huertoescolar.ui.screens.tareas.FotoEvidencia
 import cl.duoc.huertoescolar.ui.screens.tareas.formatearFecha
 
 /**
@@ -93,7 +94,7 @@ private fun TarjetaProblema(
         Text("$sector · $cultivo")
         Text(problema.descripcion)
         Text("Reportado el ${formatearFecha(problema.fechaReporte)}")
-        Text("Foto adjunta: ${problema.fotoUri ?: "sin foto"}")
+        FotoEvidencia(problema.fotoUri)
 
         if (problema.comentarioDocente.isNotBlank()) {
             Text(
