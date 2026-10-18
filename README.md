@@ -8,10 +8,18 @@ Proyecto de la asignatura **DSY1105 · Desarrollo de Aplicaciones Móviles** (Du
 > **Todos los usuarios, datos y fotos son ficticios.** La app no usa GPS, micrófono, datos biométricos
 > ni sensores reales, y no controla ningún dispositivo ni sistema de riego.
 
-## Integrantes
+## Equipo y repositorio
 
-- _Integrante 1_ (acceso, sectores y cultivos)
-- _Integrante 2_ (tareas, problemas, alertas, sensores e historial)
+| Integrante (GitHub) | Módulos |
+|---|---|
+| [aaron16-code](https://github.com/aaron16-code) | Tareas, problemas, alertas, sensores simulados, historial y pruebas unitarias |
+| [Matip9902](https://github.com/Matip9902) | Inicio de sesión por perfil, sectores, cultivos y persistencia con Room |
+
+- Repositorio **público**. Los integrantes y el docente del curso son colaboradores del proyecto.
+- Rama de entrega: **`main`**. Cada integrante trabaja en su propia rama (`huerta-aaron` y `Huerta-matias`)
+  y se une a `main` mediante Pull Requests.
+- El APK firmado en modo release se entrega aparte y **no** está en el repositorio
+  (tampoco la llave de firma).
 
 ## Perfiles
 
@@ -60,8 +68,9 @@ Photo Picker · pruebas unitarias con JUnit · Git y GitHub.
 ## Pruebas unitarias
 
 En Android Studio: clic derecho sobre `app/src/test/java/cl/duoc/huertoescolar` y **Run Tests**.
-Cubren las reglas del caso: validación y rechazo de tareas, permisos por perfil, tareas atrasadas,
-estados de las lecturas simuladas, seguimiento de problemas y validaciones del formulario de tareas.
+Son 40 pruebas. Cubren las reglas del caso: validación y rechazo de tareas, permisos por perfil,
+tareas atrasadas, estados de las lecturas simuladas, seguimiento de problemas y validaciones del
+formulario de crear tareas.
 
 ## Estructura
 
