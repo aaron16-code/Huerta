@@ -21,6 +21,7 @@ interface PersistenciaOperacion {
 
     suspend fun insertarTarea(tarea: Tarea)
     suspend fun actualizarTarea(tarea: Tarea)
+    suspend fun eliminarTarea(tareaId: Int)
     suspend fun insertarProblema(problema: Problema)
     suspend fun actualizarProblema(problema: Problema)
 }

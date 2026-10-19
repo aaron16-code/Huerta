@@ -89,6 +89,9 @@ interface OperacionDao {
     @Update
     suspend fun actualizarTarea(tarea: TareaOpEntity)
 
+    @Query("DELETE FROM op_tareas WHERE id = :tareaId")
+    suspend fun eliminarTarea(tareaId: Int)
+
     @Query("SELECT * FROM op_tareas ORDER BY id")
     suspend fun leerTareas(): List<TareaOpEntity>
 

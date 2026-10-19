@@ -15,8 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
+import cl.duoc.huertoescolar.ui.screens.tareas.copiarFotografiaAPersistencia
 
 
 @Composable
@@ -25,11 +27,16 @@ fun SelectorFoto(
     onFotoSeleccionada: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val contexto = LocalContext.current
     val selectorFoto = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            onFotoSeleccionada(uri.toString())
+            runCatching {
+                copiarFotografiaAPersistencia(contexto, uri)
+            }.onSuccess { uriPermanente ->
+                onFotoSeleccionada(uriPermanente.toString())
+            }
         }
     }
 
@@ -62,7 +69,8 @@ fun SelectorFoto(
                     }
                 },
                 update = { imagen ->
-                    imagen.setImageURI(Uri.parse(fotoUri))
+                    runCatching { imagen.setImageURI(Uri.parse(fotoUri)) }
+                        .onFailure { imagen.setImageDrawable(null) }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

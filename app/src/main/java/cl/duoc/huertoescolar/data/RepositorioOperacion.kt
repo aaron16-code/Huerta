@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.update
  */
 object RepositorioOperacion {
 
+    private const val TAREA_RETIRADA = "Revisar la tapa del invernadero"
     private const val HORA = 60L * 60 * 1000
     private const val DIA = 24 * HORA
     private fun enDias(n: Int) = System.currentTimeMillis() + n * DIA
@@ -53,7 +54,9 @@ object RepositorioOperacion {
                 if (guardado == null) {
                     destino.guardarSemilla(DatosOperacion(_tareas.value, _problemas.value, _lecturas.value))
                 } else {
-                    _tareas.value = guardado.tareas
+                    val tareasRetiradas = guardado.tareas.filter { it.descripcion == TAREA_RETIRADA }
+                    _tareas.value = guardado.tareas.filterNot { it.descripcion == TAREA_RETIRADA }
+                    tareasRetiradas.forEach { destino.eliminarTarea(it.id) }
                     _problemas.value = guardado.problemas
                     _lecturas.value = guardado.lecturas
                 }
@@ -246,8 +249,6 @@ object RepositorioOperacion {
             estado = EstadoTarea.RECHAZADA, fechaRealizacion = enDias(-3), realizadaPorId = 2,
             comentarioEstudiante = "Terminé.", comentarioDocente = "Faltó retirar los restos del fondo. Repítela.",
             validadorId = 1, fechaValidacion = enDias(-2)),
-        Tarea(7, TipoTarea.MANTENIMIENTO, "Revisar la tapa del invernadero", "Revisa que cierre bien y avisa si ves daños.",
-            3, null, enDias(-1), enDias(3), responsableUsuarioId = 2, creadaPorId = 1),
         Tarea(8, TipoTarea.COSECHA, "Cosechar la lechuga", "Corta las hojas exteriores con cuidado.",
             1, 1, enDias(-1), enDias(6), responsableUsuarioId = 4, creadaPorId = 1)
     )

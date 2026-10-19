@@ -35,6 +35,10 @@ class PersistenciaRoom(contexto: Context) : PersistenciaOperacion {
         dao.actualizarTarea(tarea.aEntidad())
     }
 
+    override suspend fun eliminarTarea(tareaId: Int) {
+        dao.eliminarTarea(tareaId)
+    }
+
     override suspend fun insertarProblema(problema: Problema) {
         dao.insertarProblema(problema.aEntidad())
     }
