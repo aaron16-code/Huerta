@@ -17,7 +17,7 @@ import org.junit.Test
 /**
  * Reglas del caso sobre el repositorio en memoria.
  * El repositorio es único (object) y conserva su estado entre pruebas, por eso cada prueba
- * que modifica datos usa una tarea distinta (2, 5 y 7) y las demás solo comprueban rechazos.
+ * que modifica datos usa una tarea distinta (1, 2 y 5) y las demás solo comprueban rechazos.
  */
 class ReglasOperacionTest {
 
@@ -111,15 +111,15 @@ class ReglasOperacionTest {
 
     @Test
     fun el_docente_valida_una_tarea_enviada() {
-        assertTrue(repo.marcarRealizada(7, estudiante.id, estudiante.grupo, "Revisé la tapa", null).isSuccess)
+        assertTrue(repo.marcarRealizada(1, estudiante.id, estudiante.grupo, "Regué la lechuga", null).isSuccess)
 
-        val r = repo.validarTarea(7, docente.id, RolUsuario.ADMINISTRADOR, true, "Bien")
+        val r = repo.validarTarea(1, docente.id, RolUsuario.ADMINISTRADOR, true, "Bien")
 
         assertTrue(r.isSuccess)
-        assertEquals(EstadoTarea.VALIDADA, tarea(7).estado)
-        assertEquals(docente.id, tarea(7).validadorId)
-        assertEquals("Bien", tarea(7).comentarioDocente)
-        assertNotNull(tarea(7).fechaValidacion)
+        assertEquals(EstadoTarea.VALIDADA, tarea(1).estado)
+        assertEquals(docente.id, tarea(1).validadorId)
+        assertEquals("Bien", tarea(1).comentarioDocente)
+        assertNotNull(tarea(1).fechaValidacion)
     }
 
     @Test
