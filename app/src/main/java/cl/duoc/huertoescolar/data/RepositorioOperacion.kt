@@ -108,6 +108,30 @@ object RepositorioOperacion {
         return Result.success(Unit)
     }
 
+    /** El docente modifica los datos generales sin perder evidencia, estado ni validación. */
+    fun editarTarea(rol: RolUsuario, editada: Tarea): Result<Unit> {
+        if (rol != RolUsuario.ADMINISTRADOR) return fallo("Solo docentes o talleristas pueden editar tareas")
+        val original = obtenerTarea(editada.id) ?: return fallo("La tarea no existe")
+        if (editada.descripcion.isBlank()) return fallo("La descripción es obligatoria")
+        if (editada.instrucciones.isBlank()) return fallo("Las instrucciones son obligatorias")
+        if (editada.responsableUsuarioId == null && editada.grupoAsignado.isNullOrBlank())
+            return fallo("Asigna la tarea a un estudiante o a un grupo")
+
+        actualizarTarea(original.id) {
+            original.copy(
+                tipo = editada.tipo,
+                descripcion = editada.descripcion.trim(),
+                instrucciones = editada.instrucciones.trim(),
+                sectorId = editada.sectorId,
+                cultivoId = editada.cultivoId,
+                fechaProgramada = editada.fechaProgramada,
+                responsableUsuarioId = editada.responsableUsuarioId,
+                grupoAsignado = editada.grupoAsignado
+            )
+        }
+        return Result.success(Unit)
+    }
+
     /** El estudiante marca como realizada: queda PENDIENTE DE VALIDACIÓN (no se valida sola). */
     fun marcarRealizada(tareaId: Int, usuarioId: Int, grupo: String, comentario: String, fotoUri: String?): Result<Unit> {
         val t = obtenerTarea(tareaId) ?: return fallo("La tarea no existe")

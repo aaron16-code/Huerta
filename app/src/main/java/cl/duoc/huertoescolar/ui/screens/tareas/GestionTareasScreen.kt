@@ -30,6 +30,7 @@ import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
 fun GestionTareasScreen(
     usuario: UsuarioPrueba,
     onCrearTarea: () -> Unit,
+    onEditarTarea: (Int) -> Unit,
     onVerDetalle: (Int) -> Unit,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier,
@@ -79,6 +80,7 @@ fun GestionTareasScreen(
                     TarjetaTareaDocente(
                         tarea = tarea,
                         sector = nombreSector(tarea.sectorId),
+                        onEditar = { onEditarTarea(tarea.id) },
                         onVerDetalle = { onVerDetalle(tarea.id) }
                     )
                 }
@@ -88,7 +90,12 @@ fun GestionTareasScreen(
 }
 
 @Composable
-private fun TarjetaTareaDocente(tarea: Tarea, sector: String, onVerDetalle: () -> Unit) {
+private fun TarjetaTareaDocente(
+    tarea: Tarea,
+    sector: String,
+    onEditar: () -> Unit,
+    onVerDetalle: () -> Unit
+) {
     val estado = tarea.estadoVisible()
     TarjetaHuerto {
         Text(tarea.descripcion, style = MaterialTheme.typography.titleMedium)
@@ -97,6 +104,7 @@ private fun TarjetaTareaDocente(tarea: Tarea, sector: String, onVerDetalle: () -
         Text("Asignada a: ${textoResponsable(tarea)}")
         Text("Fecha programada: ${formatearFecha(tarea.fechaProgramada)}")
         BotonSecundario(texto = "Ver detalle", onClick = onVerDetalle)
+        BotonPrincipal(texto = "Editar tarea", onClick = onEditar)
     }
 }
 

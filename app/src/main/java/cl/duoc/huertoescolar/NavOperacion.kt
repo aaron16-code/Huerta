@@ -18,6 +18,7 @@ import cl.duoc.huertoescolar.ui.screens.problemas.ReportarProblemaScreen
 import cl.duoc.huertoescolar.ui.screens.sensores.PanelSensoresScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.CrearTareaScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.DetalleTareaScreen
+import cl.duoc.huertoescolar.ui.screens.tareas.EditarTareaScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.GestionTareasScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.ListaTareasScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.PanelValidacionScreen
@@ -43,6 +44,7 @@ object RutasOperacion {
     const val DETALLE_TAREA = "detalle_tarea"
     const val REPORTAR_PROBLEMA = "reportar_problema"
     const val CREAR_TAREA = "crear_tarea"
+    const val EDITAR_TAREA = "editar_tarea"
 }
 
 /**
@@ -66,6 +68,10 @@ fun NavGraphBuilder.grafoOperacion(
                     usuario = usuario,
                     nombreSector = ::nombreDeSector,
                     onCrearTarea = { navController.navigate(RutasOperacion.CREAR_TAREA) },
+                    onEditarTarea = { id ->
+                        RepositorioOperacion.seleccionarTarea(id)
+                        navController.navigate(RutasOperacion.EDITAR_TAREA)
+                    },
                     onVerDetalle = { id ->
                         RepositorioOperacion.seleccionarTarea(id)
                         navController.navigate(RutasOperacion.DETALLE_TAREA)
@@ -91,6 +97,17 @@ fun NavGraphBuilder.grafoOperacion(
         IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             CrearTareaScreen(
+                usuario = usuario,
+                onVolver = { navController.popBackStack() }
+            )
+        }
+    }
+
+    // Docente: editar y reasignar una tarea existente
+    composable(RutasOperacion.EDITAR_TAREA) {
+        IniciarPersistencia()
+        usuarioActual()?.let { usuario ->
+            EditarTareaScreen(
                 usuario = usuario,
                 onVolver = { navController.popBackStack() }
             )
