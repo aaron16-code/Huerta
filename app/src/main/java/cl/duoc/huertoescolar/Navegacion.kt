@@ -1,33 +1,41 @@
 package cl.duoc.huertoescolar
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import cl.duoc.huertoescolar.ui.screens.home.InicioScreen
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import cl.duoc.huertoescolar.data.UsuarioPrueba
-import cl.duoc.huertoescolar.ui.screens.login.LoginScreen
-import cl.duoc.huertoescolar.ui.screens.sectores.SectoresScreen
-import cl.duoc.huertoescolar.ui.screens.sectores.CrearSectorScreen
+import cl.duoc.huertoescolar.data.UsuariosPrueba
 import cl.duoc.huertoescolar.ui.screens.cultivos.CrearCultivoScreen
 import cl.duoc.huertoescolar.ui.screens.cultivos.CultivosScreen
 import cl.duoc.huertoescolar.ui.screens.cultivos.DetalleCultivoScreen
 import cl.duoc.huertoescolar.ui.screens.cultivos.EditarCultivoScreen
+import cl.duoc.huertoescolar.ui.screens.home.InicioScreen
+import cl.duoc.huertoescolar.ui.screens.login.LoginScreen
+import cl.duoc.huertoescolar.ui.screens.perfil.PerfilScreen
+import cl.duoc.huertoescolar.ui.screens.sectores.CrearSectorScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.DetalleSectorScreen
 import cl.duoc.huertoescolar.ui.screens.sectores.EditarSectorScreen
-import cl.duoc.huertoescolar.ui.screens.perfil.PerfilScreen
+import cl.duoc.huertoescolar.ui.screens.sectores.SectoresScreen
 
 @Composable
 fun Navegacion(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
-    var usuarioSeleccionado by remember {
-        mutableStateOf<UsuarioPrueba?>(null)
+    // Conserva el perfil seleccionado al girar la pantalla.
+    var usuarioId by rememberSaveable {
+        mutableStateOf<Int?>(null)
+    }
+
+    val usuarios = listOf(UsuariosPrueba.docente) +
+            UsuariosPrueba.estudiantes
+
+    val usuarioSeleccionado = usuarios.firstOrNull {
+        it.id == usuarioId
     }
 
     NavHost(
@@ -38,12 +46,13 @@ fun Navegacion(modifier: Modifier = Modifier) {
         composable(Rutas.LOGIN) {
             LoginScreen(
                 onIngresar = { usuario ->
-                    usuarioSeleccionado = usuario
+                    usuarioId = usuario.id
 
                     navController.navigate(Rutas.INICIO) {
                         popUpTo(Rutas.LOGIN) {
                             inclusive = true
                         }
+                        launchSingleTop = true
                     }
                 }
             )
@@ -81,7 +90,7 @@ fun Navegacion(modifier: Modifier = Modifier) {
                         navController.navigate(Rutas.HISTORIAL)
                     },
                     onCerrarSesion = {
-                        usuarioSeleccionado = null
+                        usuarioId = null
 
                         navController.navigate(Rutas.LOGIN) {
                             popUpTo(Rutas.INICIO) {
@@ -140,7 +149,9 @@ fun Navegacion(modifier: Modifier = Modifier) {
 
         composable(Rutas.DETALLE_SECTOR) {
             DetalleSectorScreen(
-                onVolver = { navController.popBackStack() }
+                onVolver = {
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -168,21 +179,31 @@ fun Navegacion(modifier: Modifier = Modifier) {
 
         composable(Rutas.CREAR_CULTIVO) {
             CrearCultivoScreen(
-                onCultivoCreado = { navController.popBackStack() },
-                onVolver = { navController.popBackStack() }
+                onCultivoCreado = {
+                    navController.popBackStack()
+                },
+                onVolver = {
+                    navController.popBackStack()
+                }
             )
         }
 
         composable(Rutas.EDITAR_CULTIVO) {
             EditarCultivoScreen(
-                onCultivoActualizado = { navController.popBackStack() },
-                onVolver = { navController.popBackStack() }
+                onCultivoActualizado = {
+                    navController.popBackStack()
+                },
+                onVolver = {
+                    navController.popBackStack()
+                }
             )
         }
 
         composable(Rutas.DETALLE_CULTIVO) {
             DetalleCultivoScreen(
-                onVolver = { navController.popBackStack() }
+                onVolver = {
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -201,6 +222,5 @@ fun Navegacion(modifier: Modifier = Modifier) {
             navController = navController,
             usuarioActual = { usuarioSeleccionado }
         )
-
     }
 }
