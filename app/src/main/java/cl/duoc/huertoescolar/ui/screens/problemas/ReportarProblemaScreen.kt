@@ -1,18 +1,29 @@
 package cl.duoc.huertoescolar.ui.screens.problemas
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,6 +33,7 @@ import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
+import cl.duoc.huertoescolar.ui.screens.tareas.CampoValidado
 import cl.duoc.huertoescolar.ui.screens.tareas.SelectorFotoGaleria
 
 /** Formulario del estudiante para reportar un problema del huerto. */
@@ -45,7 +57,7 @@ fun ReportarProblemaScreen(
                 BotonPrincipal(texto = "Volver a problemas", onClick = onVolver)
             }
         } else {
-            TarjetaHuerto {
+            TarjetaHuerto(modifier = Modifier.animateContentSize()) {
                 Text("¿En qué sector?", style = MaterialTheme.typography.titleMedium)
                 FilaOpciones {
                     RepositorioHuerto.sectores.forEach { sector ->
@@ -56,6 +68,7 @@ fun ReportarProblemaScreen(
                         )
                     }
                 }
+                MensajeAnimado(viewModel.errorSector, esError = true)
 
                 if (viewModel.sectorId != null) {
                     Text("¿Qué cultivo? (opcional)", style = MaterialTheme.typography.titleMedium)
@@ -88,12 +101,13 @@ fun ReportarProblemaScreen(
                     }
                 }
 
-                OutlinedTextField(
-                    value = viewModel.descripcion,
-                    onValueChange = viewModel::cambiarDescripcion,
-                    label = { Text("Describe brevemente el problema") },
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth()
+                CampoValidado(
+                    valor = viewModel.descripcion,
+                    alCambiar = viewModel::cambiarDescripcion,
+                    etiqueta = "Describe brevemente el problema",
+                    icono = Icons.Filled.Edit,
+                    error = viewModel.errorDescripcion,
+                    minLines = 3
                 )
 
             }
@@ -106,14 +120,7 @@ fun ReportarProblemaScreen(
 
             BotonPrincipal(texto = "Enviar reporte", onClick = viewModel::pedirConfirmacion)
 
-            viewModel.mensaje?.let { texto ->
-                Text(
-                    text = texto,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (viewModel.mensajeEsError) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.primary
-                )
-            }
+            MensajeAnimado(viewModel.mensaje, esError = viewModel.mensajeEsError)
         }
 
         if (viewModel.mostrarConfirmacion) {
@@ -140,4 +147,24 @@ private fun FilaOpciones(contenido: @Composable RowScope.() -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         content = contenido
     )
+}
+
+/** Mensaje que aparece y desaparece con una animación suave. */
+@Composable
+private fun MensajeAnimado(texto: String?, esError: Boolean) {
+    var ultimo by remember { mutableStateOf("") }
+    LaunchedEffect(texto) {
+        if (texto != null) ultimo = texto
+    }
+    AnimatedVisibility(
+        visible = texto != null,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
+        Text(
+            text = texto ?: ultimo,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (esError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+        )
+    }
 }

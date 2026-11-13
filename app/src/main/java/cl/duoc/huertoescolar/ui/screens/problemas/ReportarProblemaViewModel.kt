@@ -29,9 +29,16 @@ class ReportarProblemaViewModel : ViewModel() {
     var mensajeEsError by mutableStateOf(false)
         private set
 
+    // Un error por campo: lo decide la lógica, la pantalla solo lo muestra
+    var errorSector by mutableStateOf<String?>(null)
+        private set
+    var errorDescripcion by mutableStateOf<String?>(null)
+        private set
+
     fun elegirSector(id: Int) {
         sectorId = id
         cultivoId = null // el cultivo depende del sector
+        errorSector = null
         mensaje = null
     }
 
@@ -45,6 +52,7 @@ class ReportarProblemaViewModel : ViewModel() {
 
     fun cambiarDescripcion(texto: String) {
         descripcion = texto
+        errorDescripcion = null
     }
 
     /** Guarda la foto que eligió el estudiante (viene de SelectorFotoGaleria). */
@@ -58,13 +66,13 @@ class ReportarProblemaViewModel : ViewModel() {
 
     /** Valida el formulario y, si está bien, pide la confirmación al usuario. */
     fun pedirConfirmacion() {
-        when {
-            sectorId == null -> mostrarError("Elige el sector donde viste el problema.")
-            descripcion.trim().length < 5 -> mostrarError("Describe el problema con al menos 5 caracteres.")
-            else -> {
-                mensaje = null
-                mostrarConfirmacion = true
-            }
+        errorSector = if (sectorId == null) "Elige el sector donde viste el problema" else null
+        errorDescripcion =
+            if (descripcion.trim().length < 5) "Describe el problema con al menos 5 caracteres" else null
+
+        if (errorSector == null && errorDescripcion == null) {
+            mensaje = null
+            mostrarConfirmacion = true
         }
     }
 

@@ -1,18 +1,31 @@
 package cl.duoc.huertoescolar.ui.screens.tareas
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -61,27 +74,25 @@ fun CrearTareaScreen(
                         )
                     }
                 }
-                OutlinedTextField(
-                    value = viewModel.descripcion,
-                    onValueChange = viewModel::cambiarDescripcion,
-                    label = { Text("Descripción") },
-                    isError = viewModel.errorDescripcion != null,
-                    supportingText = { viewModel.errorDescripcion?.let { Text(it) } },
-                    modifier = Modifier.fillMaxWidth()
+                CampoValidado(
+                    valor = viewModel.descripcion,
+                    alCambiar = viewModel::cambiarDescripcion,
+                    etiqueta = "Descripción",
+                    icono = Icons.Filled.Edit,
+                    error = viewModel.errorDescripcion
                 )
-                OutlinedTextField(
-                    value = viewModel.instrucciones,
-                    onValueChange = viewModel::cambiarInstrucciones,
-                    label = { Text("Instrucciones breves") },
-                    isError = viewModel.errorInstrucciones != null,
-                    supportingText = { viewModel.errorInstrucciones?.let { Text(it) } },
-                    minLines = 2,
-                    modifier = Modifier.fillMaxWidth()
+                CampoValidado(
+                    valor = viewModel.instrucciones,
+                    alCambiar = viewModel::cambiarInstrucciones,
+                    etiqueta = "Instrucciones breves",
+                    icono = Icons.Filled.Info,
+                    error = viewModel.errorInstrucciones,
+                    minLines = 2
                 )
             }
 
-            // 2) Dónde
-            TarjetaHuerto {
+            // 2) Dónde (la tarjeta se expande con animación al elegir un sector)
+            TarjetaHuerto(modifier = Modifier.animateContentSize()) {
                 Text("Sector", style = MaterialTheme.typography.titleMedium)
                 FilaOpciones {
                     RepositorioHuerto.sectores.forEach { sector ->
@@ -92,7 +103,7 @@ fun CrearTareaScreen(
                         )
                     }
                 }
-                viewModel.errorSector?.let { MensajeError(it) }
+                MensajeError(viewModel.errorSector)
 
                 if (viewModel.sectorId != null) {
                     Text("Cultivo (opcional)", style = MaterialTheme.typography.titleMedium)
@@ -118,14 +129,13 @@ fun CrearTareaScreen(
             // 3) Cuándo
             TarjetaHuerto {
                 Text("Fecha programada", style = MaterialTheme.typography.titleMedium)
-                OutlinedTextField(
-                    value = viewModel.fechaTexto,
-                    onValueChange = viewModel::cambiarFecha,
-                    label = { Text("dd/MM/aaaa") },
-                    isError = viewModel.errorFecha != null,
-                    supportingText = { viewModel.errorFecha?.let { Text(it) } },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                CampoValidado(
+                    valor = viewModel.fechaTexto,
+                    alCambiar = viewModel::cambiarFecha,
+                    etiqueta = "dd/MM/aaaa",
+                    icono = Icons.Filled.DateRange,
+                    error = viewModel.errorFecha,
+                    singleLine = true
                 )
                 FilaOpciones {
                     FilterChip(selected = false, onClick = { viewModel.elegirFechaRapida(0) }, label = { Text("Hoy") })
@@ -147,12 +157,12 @@ fun CrearTareaScreen(
                         )
                     }
                 }
-                viewModel.errorDestinatario?.let { MensajeError(it) }
+                MensajeError(viewModel.errorDestinatario)
             }
 
             BotonPrincipal(texto = "Crear tarea", onClick = viewModel::pedirConfirmacion)
 
-            viewModel.mensajeError?.let { MensajeError(it) }
+            MensajeError(viewModel.mensajeError)
         }
 
         if (viewModel.mostrarConfirmacion) {
@@ -171,13 +181,24 @@ fun CrearTareaScreen(
     }
 }
 
+/** Mensaje de error que aparece y desaparece con una animación suave. */
 @Composable
-private fun MensajeError(texto: String) {
-    Text(
-        text = texto,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.error
-    )
+private fun MensajeError(texto: String?) {
+    var ultimo by remember { mutableStateOf("") }
+    LaunchedEffect(texto) {
+        if (texto != null) ultimo = texto
+    }
+    AnimatedVisibility(
+        visible = texto != null,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
+        Text(
+            text = texto ?: ultimo,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error
+        )
+    }
 }
 
 /** Fila de opciones que se desplaza hacia el lado si no caben en la pantalla. */

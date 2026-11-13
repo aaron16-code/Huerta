@@ -1,5 +1,7 @@
 package cl.duoc.huertoescolar.ui.screens.tareas
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -108,13 +110,23 @@ private fun TarjetaTarea(tarea: Tarea, sector: String, onVerDetalle: () -> Unit)
     }
 }
 
-/** Color de fondo de la etiqueta de estado (compartido con las otras pantallas de tareas). */
+/**
+ * Color de fondo de la etiqueta de estado (compartido con las otras pantallas de tareas).
+ * Cambia con una transición animada cuando la tarea cambia de estado.
+ */
 @Composable
-internal fun colorEstadoContenedor(estado: EstadoTarea): Color = when (estado) {
-    EstadoTarea.ATRASADA, EstadoTarea.RECHAZADA -> MaterialTheme.colorScheme.errorContainer
-    EstadoTarea.VALIDADA -> MaterialTheme.colorScheme.primaryContainer
-    EstadoTarea.PENDIENTE_VALIDACION -> MaterialTheme.colorScheme.tertiaryContainer
-    else -> MaterialTheme.colorScheme.secondaryContainer
+internal fun colorEstadoContenedor(estado: EstadoTarea): Color {
+    val objetivo = when (estado) {
+        EstadoTarea.ATRASADA, EstadoTarea.RECHAZADA -> MaterialTheme.colorScheme.errorContainer
+        EstadoTarea.VALIDADA -> MaterialTheme.colorScheme.primaryContainer
+        EstadoTarea.PENDIENTE_VALIDACION -> MaterialTheme.colorScheme.tertiaryContainer
+        else -> MaterialTheme.colorScheme.secondaryContainer
+    }
+    return animateColorAsState(
+        targetValue = objetivo,
+        animationSpec = tween(durationMillis = 500),
+        label = "colorEstado"
+    ).value
 }
 
 internal fun formatearFecha(millis: Long): String =
