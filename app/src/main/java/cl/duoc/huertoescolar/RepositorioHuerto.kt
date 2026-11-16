@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import cl.duoc.huertoescolar.data.local.CultivoEntity
+import cl.duoc.huertoescolar.data.CatalogoHuertoRepository
 import cl.duoc.huertoescolar.data.local.HuertoDao
 import cl.duoc.huertoescolar.data.local.SectorEntity
 import cl.duoc.huertoescolar.data.operacion.OperacionDatabase
@@ -15,15 +16,15 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-object RepositorioHuerto {
+object RepositorioHuerto : CatalogoHuertoRepository {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var huertoDao: HuertoDao? = null
     private var inicializado = false
 
-    var sectores by mutableStateOf(listaSectoresInicial())
+    override var sectores by mutableStateOf(listaSectoresInicial())
         private set
 
-    var cultivos by mutableStateOf(listaCultivosInicial())
+    override var cultivos by mutableStateOf(listaCultivosInicial())
         private set
 
     var sectorSeleccionado by mutableStateOf<Sector?>(null)

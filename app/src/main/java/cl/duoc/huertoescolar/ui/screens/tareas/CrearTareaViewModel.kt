@@ -5,178 +5,128 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import cl.duoc.huertoescolar.data.RepositorioOperacion
+import cl.duoc.huertoescolar.RepositorioHuerto
+import cl.duoc.huertoescolar.data.CatalogoHuertoRepository
 import cl.duoc.huertoescolar.data.Tarea
+import cl.duoc.huertoescolar.data.TareasRepository
 import cl.duoc.huertoescolar.data.TipoTarea
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.data.UsuariosPrueba
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
-private const val DIA = 24L * 60 * 60 * 1000
+class CrearTareaViewModel(
+    private val repository: TareasRepository = RepositorioOperacion,
+    private val catalogoRepository: CatalogoHuertoRepository = RepositorioHuerto
+) : ViewModel() {
 
-/** A quién se asigna la tarea: un estudiante ficticio o un grupo. */
-data class Destinatario(
-    val etiqueta: String,
-    val usuarioId: Int?,
-    val grupo: String?
-)
+    val destinatarios = destinatariosDisponibles()
+    val sectores get() = catalogoRepository.sectores
+    val cultivos get() = catalogoRepository.cultivos
 
-/**
- * Convierte "dd/MM/aaaa" en el último instante de ese día (así una tarea de hoy no nace atrasada).
- * Devuelve null si el texto no es una fecha válida.
- */
-internal fun parsearFechaFinDelDia(texto: String): Long? {
-    val limpio = texto.trim()
-    if (!Regex("""\d{2}/\d{2}/\d{4}""").matches(limpio)) return null
-    return try {
-        val formato = SimpleDateFormat("dd/MM/yyyy", Locale("es", "CL")).apply { isLenient = false }
-        val fecha = formato.parse(limpio) ?: return null
-        Calendar.getInstance().apply {
-            time = fecha
-            set(Calendar.HOUR_OF_DAY, 23)
-            set(Calendar.MINUTE, 59)
-            set(Calendar.SECOND, 59)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-    } catch (e: Exception) {
-        null
+    var uiState by mutableStateOf(TareaFormUiState())
+        private set
+
+    // Propiedades de solo lectura conservadas para las pruebas existentes.
+    val tipo get() = uiState.tipo
+    val descripcion get() = uiState.descripcion
+    val instrucciones get() = uiState.instrucciones
+    val sectorId get() = uiState.sectorId
+    val cultivoId get() = uiState.cultivoId
+    val fechaTexto get() = uiState.fechaTexto
+    val destinatario get() = uiState.destinatario
+    val errorDescripcion get() = uiState.errorDescripcion
+    val errorInstrucciones get() = uiState.errorInstrucciones
+    val errorSector get() = uiState.errorSector
+    val errorFecha get() = uiState.errorFecha
+    val errorDestinatario get() = uiState.errorDestinatario
+    val mensajeError get() = uiState.mensajeError
+    val mostrarConfirmacion get() = uiState.mostrarConfirmacion
+    val creada get() = uiState.guardada
+
+    fun elegirTipo(tipo: TipoTarea) = actualizar { copy(tipo = tipo) }
+    fun cambiarDescripcion(texto: String) = actualizar {
+        copy(descripcion = texto, errorDescripcion = null)
     }
-}
+    fun cambiarInstrucciones(texto: String) = actualizar {
+        copy(instrucciones = texto, errorInstrucciones = null)
+    }
+    fun cambiarFecha(texto: String) = actualizar { copy(fechaTexto = texto, errorFecha = null) }
+    fun elegirDestinatario(destinatario: DestinatarioTareaUi) = actualizar {
+        copy(destinatario = destinatario, errorDestinatario = null)
+    }
+    fun elegirCultivo(id: Int?) = actualizar { copy(cultivoId = id) }
 
-class CrearTareaViewModel : ViewModel() {
-
-    // Usuarios y grupo ficticios de los datos de prueba
-    val destinatarios = UsuariosPrueba.estudiantes.map { estudiante ->
-        Destinatario(estudiante.nombre, estudiante.id, null)
-    } + listOf(
-        Destinatario("Grupo Taller Huerto A", null, "Taller Huerto A")
-    )
-
-    var tipo by mutableStateOf(TipoTarea.RIEGO)
-        private set
-    var descripcion by mutableStateOf("")
-        private set
-    var instrucciones by mutableStateOf("")
-        private set
-    var sectorId by mutableStateOf<Int?>(null)
-        private set
-    var cultivoId by mutableStateOf<Int?>(null)
-        private set
-    var fechaTexto by mutableStateOf("")
-        private set
-    var destinatario by mutableStateOf<Destinatario?>(null)
-        private set
-
-    var errorDescripcion by mutableStateOf<String?>(null)
-        private set
-    var errorInstrucciones by mutableStateOf<String?>(null)
-        private set
-    var errorSector by mutableStateOf<String?>(null)
-        private set
-    var errorFecha by mutableStateOf<String?>(null)
-        private set
-    var errorDestinatario by mutableStateOf<String?>(null)
-        private set
-
-    var mostrarConfirmacion by mutableStateOf(false)
-        private set
-    var creada by mutableStateOf(false)
-        private set
-    var mensajeError by mutableStateOf<String?>(null)
-        private set
-
-    fun elegirTipo(nuevo: TipoTarea) { tipo = nuevo }
-    fun cambiarDescripcion(texto: String) { descripcion = texto; errorDescripcion = null }
-    fun cambiarInstrucciones(texto: String) { instrucciones = texto; errorInstrucciones = null }
-    fun cambiarFecha(texto: String) { fechaTexto = texto; errorFecha = null }
-    fun elegirDestinatario(nuevo: Destinatario) { destinatario = nuevo; errorDestinatario = null }
-    fun elegirCultivo(id: Int?) { cultivoId = id }
-
-    fun elegirSector(id: Int) {
-        sectorId = id
-        cultivoId = null // el cultivo depende del sector
-        errorSector = null
+    fun elegirSector(id: Int) = actualizar {
+        copy(sectorId = id, cultivoId = null, errorSector = null)
     }
 
-    /** Atajo para no escribir la fecha: hoy más N días. */
-    fun elegirFechaRapida(dias: Int) {
-        val formato = SimpleDateFormat("dd/MM/yyyy", Locale("es", "CL"))
-        cambiarFecha(formato.format(Date(System.currentTimeMillis() + dias * DIA)))
-    }
+    fun elegirFechaRapida(dias: Int) = cambiarFecha(fechaRapida(dias))
 
-    /** Valida el formulario completo. Si todo está bien, pide la confirmación. */
     fun pedirConfirmacion() {
-        if (validar()) {
-            mensajeError = null
-            mostrarConfirmacion = true
+        val errores = ValidadorFormularioTarea.validar(
+            state = uiState,
+            exigirFechaActualOFutura = true
+        )
+        uiState = uiState.conErrores(errores)
+        if (errores.esValido) {
+            uiState = uiState.copy(mostrarConfirmacion = true, mensajeError = null)
         }
     }
 
     fun cancelarConfirmacion() {
-        mostrarConfirmacion = false
+        uiState = uiState.copy(mostrarConfirmacion = false)
     }
 
     fun crear(usuario: UsuarioPrueba) {
-        mostrarConfirmacion = false
-        val sector = sectorId ?: return
-        val fecha = parsearFechaFinDelDia(fechaTexto) ?: return
-        val destino = destinatario ?: return
+        val state = uiState
+        val sector = state.sectorId ?: return
+        val fecha = parsearFechaFinDelDia(state.fechaTexto) ?: return
+        val destino = state.destinatario ?: return
 
-        val nueva = Tarea(
-            id = 0,
-            tipo = tipo,
-            descripcion = descripcion.trim(),
-            instrucciones = instrucciones.trim(),
-            sectorId = sector,
-            cultivoId = cultivoId,
-            fechaCreacion = 0,
-            fechaProgramada = fecha,
-            responsableUsuarioId = destino.usuarioId,
-            grupoAsignado = destino.grupo,
-            creadaPorId = usuario.id
+        uiState = state.copy(mostrarConfirmacion = false)
+        val resultado = repository.crearTarea(
+            rol = usuario.rol,
+            nueva = Tarea(
+                id = 0,
+                tipo = state.tipo,
+                descripcion = state.descripcion.trim(),
+                instrucciones = state.instrucciones.trim(),
+                sectorId = sector,
+                cultivoId = state.cultivoId,
+                fechaCreacion = 0,
+                fechaProgramada = fecha,
+                responsableUsuarioId = destino.usuarioId,
+                grupoAsignado = destino.grupo,
+                creadaPorId = usuario.id
+            )
         )
-        val resultado = RepositorioOperacion.crearTarea(usuario.rol, nueva)
-        if (resultado.isSuccess) {
-            creada = true
-            mensajeError = null
+        uiState = if (resultado.isSuccess) {
+            uiState.copy(guardada = true, mensajeError = null)
         } else {
-            mensajeError = resultado.exceptionOrNull()?.message ?: "No se pudo crear la tarea."
+            uiState.copy(
+                mensajeError = resultado.exceptionOrNull()?.message ?: "No se pudo crear la tarea."
+            )
         }
     }
 
-    /** Deja el formulario vacío para crear otra tarea. */
     fun crearOtra() {
-        tipo = TipoTarea.RIEGO
-        descripcion = ""
-        instrucciones = ""
-        sectorId = null
-        cultivoId = null
-        fechaTexto = ""
-        destinatario = null
-        creada = false
-        mensajeError = null
+        uiState = TareaFormUiState()
     }
 
-    private fun validar(): Boolean {
-        errorDescripcion =
-            if (descripcion.trim().length < 5) "Escribe una descripción de al menos 5 caracteres" else null
-        errorInstrucciones =
-            if (instrucciones.trim().length < 5) "Escribe instrucciones breves (al menos 5 caracteres)" else null
-        errorSector = if (sectorId == null) "Elige un sector" else null
-        errorDestinatario = if (destinatario == null) "Elige a quién se asigna la tarea" else null
-
-        val fecha = parsearFechaFinDelDia(fechaTexto)
-        errorFecha = when {
-            fechaTexto.isBlank() -> "Indica la fecha programada"
-            fecha == null -> "Usa el formato dd/MM/aaaa (por ejemplo 25/10/2026)"
-            fecha < System.currentTimeMillis() -> "La fecha no puede ser anterior a hoy"
-            else -> null
-        }
-
-        return listOf(
-            errorDescripcion, errorInstrucciones, errorSector, errorDestinatario, errorFecha
-        ).all { it == null }
+    private fun actualizar(cambio: TareaFormUiState.() -> TareaFormUiState) {
+        uiState = uiState.cambio()
     }
 }
+
+internal fun destinatariosDisponibles(): List<DestinatarioTareaUi> =
+    UsuariosPrueba.estudiantes.map { estudiante ->
+        DestinatarioTareaUi(estudiante.nombre, estudiante.id, null)
+    } + DestinatarioTareaUi("Grupo Taller Huerto A", null, "Taller Huerto A")
+
+internal fun TareaFormUiState.conErrores(errores: ErroresFormularioTarea): TareaFormUiState =
+    copy(
+        errorDescripcion = errores.descripcion,
+        errorInstrucciones = errores.instrucciones,
+        errorSector = errores.sector,
+        errorFecha = errores.fecha,
+        errorDestinatario = errores.destinatario
+    )

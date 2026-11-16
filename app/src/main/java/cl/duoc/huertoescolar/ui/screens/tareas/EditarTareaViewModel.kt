@@ -5,111 +5,97 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import cl.duoc.huertoescolar.data.RepositorioOperacion
+import cl.duoc.huertoescolar.RepositorioHuerto
+import cl.duoc.huertoescolar.data.CatalogoHuertoRepository
+import cl.duoc.huertoescolar.data.TareasRepository
 import cl.duoc.huertoescolar.data.TipoTarea
 import cl.duoc.huertoescolar.data.UsuarioPrueba
-import cl.duoc.huertoescolar.data.UsuariosPrueba
 
-class EditarTareaViewModel : ViewModel() {
+class EditarTareaViewModel(
+    private val repository: TareasRepository = RepositorioOperacion,
+    private val catalogoRepository: CatalogoHuertoRepository = RepositorioHuerto
+) : ViewModel() {
 
-    private val tareaOriginal = RepositorioOperacion.tareaSeleccionadaId
-        ?.let(RepositorioOperacion::obtenerTarea)
+    private val tareaOriginal = repository.tareaSeleccionadaId?.let(repository::obtenerTarea)
+    val destinatarios = destinatariosDisponibles()
+    val sectores get() = catalogoRepository.sectores
+    val cultivos get() = catalogoRepository.cultivos
 
-    val destinatarios = UsuariosPrueba.estudiantes.map { estudiante ->
-        Destinatario(estudiante.nombre, estudiante.id, null)
-    } + Destinatario("Grupo Taller Huerto A", null, "Taller Huerto A")
-
-    var tipo by mutableStateOf(tareaOriginal?.tipo ?: TipoTarea.RIEGO)
-        private set
-    var descripcion by mutableStateOf(tareaOriginal?.descripcion.orEmpty())
-        private set
-    var instrucciones by mutableStateOf(tareaOriginal?.instrucciones.orEmpty())
-        private set
-    var sectorId by mutableStateOf(tareaOriginal?.sectorId)
-        private set
-    var cultivoId by mutableStateOf(tareaOriginal?.cultivoId)
-        private set
-    var fechaTexto by mutableStateOf(tareaOriginal?.let { formatearFecha(it.fechaProgramada) }.orEmpty())
-        private set
-    var destinatario by mutableStateOf(
-        destinatarios.find {
-            it.usuarioId == tareaOriginal?.responsableUsuarioId &&
-                    it.grupo == tareaOriginal?.grupoAsignado
-        }
+    var uiState by mutableStateOf(
+        tareaOriginal?.let { tarea ->
+            TareaFormUiState(
+                tipo = tarea.tipo,
+                descripcion = tarea.descripcion,
+                instrucciones = tarea.instrucciones,
+                sectorId = tarea.sectorId,
+                cultivoId = tarea.cultivoId,
+                fechaTexto = formatearFecha(tarea.fechaProgramada),
+                destinatario = destinatarios.find {
+                    it.usuarioId == tarea.responsableUsuarioId &&
+                            it.grupo == tarea.grupoAsignado
+                }
+            )
+        } ?: TareaFormUiState(tareaDisponible = false)
     )
         private set
 
-    var errorDescripcion by mutableStateOf<String?>(null)
-        private set
-    var errorInstrucciones by mutableStateOf<String?>(null)
-        private set
-    var errorSector by mutableStateOf<String?>(null)
-        private set
-    var errorFecha by mutableStateOf<String?>(null)
-        private set
-    var errorDestinatario by mutableStateOf<String?>(null)
-        private set
-    var mensajeError by mutableStateOf<String?>(null)
-        private set
-    var actualizada by mutableStateOf(false)
-        private set
+    fun elegirTipo(tipo: TipoTarea) = actualizar { copy(tipo = tipo) }
+    fun cambiarDescripcion(texto: String) = actualizar {
+        copy(descripcion = texto, errorDescripcion = null)
+    }
+    fun cambiarInstrucciones(texto: String) = actualizar {
+        copy(instrucciones = texto, errorInstrucciones = null)
+    }
+    fun cambiarFecha(texto: String) = actualizar { copy(fechaTexto = texto, errorFecha = null) }
+    fun elegirDestinatario(destinatario: DestinatarioTareaUi) = actualizar {
+        copy(destinatario = destinatario, errorDestinatario = null)
+    }
+    fun elegirCultivo(id: Int?) = actualizar { copy(cultivoId = id) }
 
-    val tareaDisponible: Boolean get() = tareaOriginal != null
-
-    fun elegirTipo(nuevo: TipoTarea) { tipo = nuevo }
-    fun cambiarDescripcion(texto: String) { descripcion = texto; errorDescripcion = null }
-    fun cambiarInstrucciones(texto: String) { instrucciones = texto; errorInstrucciones = null }
-    fun cambiarFecha(texto: String) { fechaTexto = texto; errorFecha = null }
-    fun elegirDestinatario(nuevo: Destinatario) { destinatario = nuevo; errorDestinatario = null }
-    fun elegirCultivo(id: Int?) { cultivoId = id }
-
-    fun elegirSector(id: Int) {
-        if (sectorId != id) cultivoId = null
-        sectorId = id
-        errorSector = null
+    fun elegirSector(id: Int) = actualizar {
+        copy(
+            sectorId = id,
+            cultivoId = if (sectorId == id) cultivoId else null,
+            errorSector = null
+        )
     }
 
     fun guardar(usuario: UsuarioPrueba) {
         val original = tareaOriginal ?: return
-        if (!validar()) return
-        val sector = sectorId ?: return
-        val fecha = parsearFechaFinDelDia(fechaTexto) ?: return
-        val destino = destinatario ?: return
+        val errores = ValidadorFormularioTarea.validar(
+            state = uiState,
+            exigirFechaActualOFutura = false
+        )
+        uiState = uiState.conErrores(errores)
+        if (!errores.esValido) return
 
-        val resultado = RepositorioOperacion.editarTarea(
+        val state = uiState
+        val sector = state.sectorId ?: return
+        val fecha = parsearFechaFinDelDia(state.fechaTexto) ?: return
+        val destino = state.destinatario ?: return
+        val resultado = repository.editarTarea(
             rol = usuario.rol,
             editada = original.copy(
-                tipo = tipo,
-                descripcion = descripcion,
-                instrucciones = instrucciones,
+                tipo = state.tipo,
+                descripcion = state.descripcion.trim(),
+                instrucciones = state.instrucciones.trim(),
                 sectorId = sector,
-                cultivoId = cultivoId,
+                cultivoId = state.cultivoId,
                 fechaProgramada = fecha,
                 responsableUsuarioId = destino.usuarioId,
                 grupoAsignado = destino.grupo
             )
         )
-        if (resultado.isSuccess) {
-            actualizada = true
-            mensajeError = null
+        uiState = if (resultado.isSuccess) {
+            uiState.copy(guardada = true, mensajeError = null)
         } else {
-            mensajeError = resultado.exceptionOrNull()?.message ?: "No se pudo actualizar la tarea."
+            uiState.copy(
+                mensajeError = resultado.exceptionOrNull()?.message ?: "No se pudo actualizar la tarea."
+            )
         }
     }
 
-    private fun validar(): Boolean {
-        errorDescripcion =
-            if (descripcion.trim().length < 5) "Escribe una descripción de al menos 5 caracteres" else null
-        errorInstrucciones =
-            if (instrucciones.trim().length < 5) "Escribe instrucciones breves (al menos 5 caracteres)" else null
-        errorSector = if (sectorId == null) "Elige un sector" else null
-        errorDestinatario = if (destinatario == null) "Elige a quién se asigna la tarea" else null
-        errorFecha = when {
-            fechaTexto.isBlank() -> "Indica la fecha programada"
-            parsearFechaFinDelDia(fechaTexto) == null -> "Usa el formato dd/MM/aaaa"
-            else -> null
-        }
-        return listOf(
-            errorDescripcion, errorInstrucciones, errorSector, errorFecha, errorDestinatario
-        ).all { it == null }
+    private fun actualizar(cambio: TareaFormUiState.() -> TareaFormUiState) {
+        uiState = uiState.cambio()
     }
 }

@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.update
  * IDs fijos acordados: usuario 1=docente, 2-4=estudiantes; sectores 1-3; cultivos 1-4.
  * Usa `RolUsuario` (ADMINISTRADOR, ESTUDIANTE) definido en Modelos.kt del proyecto.
  */
-object RepositorioOperacion {
+object RepositorioOperacion : TareasRepository {
 
     private const val TAREA_RETIRADA = "Revisar la tapa del invernadero"
     private const val HORA = 60L * 60 * 1000
@@ -27,7 +27,7 @@ object RepositorioOperacion {
     private fun fallo(msg: String) = Result.failure<Unit>(IllegalStateException(msg))
 
     private val _tareas = MutableStateFlow(semillaTareas())
-    val tareas: StateFlow<List<Tarea>> = _tareas.asStateFlow()
+    override val tareas: StateFlow<List<Tarea>> = _tareas.asStateFlow()
 
     private val _problemas = MutableStateFlow(semillaProblemas())
     val problemas: StateFlow<List<Problema>> = _problemas.asStateFlow()
@@ -79,13 +79,13 @@ object RepositorioOperacion {
 
     // ---------- TAREAS ----------
 
-    fun obtenerTarea(id: Int): Tarea? = _tareas.value.find { it.id == id }
+    override fun obtenerTarea(id: Int): Tarea? = _tareas.value.find { it.id == id }
 
     // Tarea elegida en la lista (mismo estilo que RepositorioHuerto.seleccionarSector)
-    var tareaSeleccionadaId: Int? = null
+    override var tareaSeleccionadaId: Int? = null
         private set
 
-    fun seleccionarTarea(id: Int) {
+    override fun seleccionarTarea(id: Int) {
         tareaSeleccionadaId = id
     }
 
@@ -96,7 +96,7 @@ object RepositorioOperacion {
                     (it.responsableUsuarioId == null && it.grupoAsignado == grupo)
         }
 
-    fun crearTarea(rol: RolUsuario, nueva: Tarea): Result<Unit> {
+    override fun crearTarea(rol: RolUsuario, nueva: Tarea): Result<Unit> {
         if (rol != RolUsuario.ADMINISTRADOR) return fallo("Solo docentes o talleristas pueden crear tareas")
         if (nueva.descripcion.isBlank()) return fallo("La descripción es obligatoria")
         if (nueva.responsableUsuarioId == null && nueva.grupoAsignado.isNullOrBlank())
@@ -109,7 +109,7 @@ object RepositorioOperacion {
     }
 
     /** El docente modifica los datos generales sin perder evidencia, estado ni validación. */
-    fun editarTarea(rol: RolUsuario, editada: Tarea): Result<Unit> {
+    override fun editarTarea(rol: RolUsuario, editada: Tarea): Result<Unit> {
         if (rol != RolUsuario.ADMINISTRADOR) return fallo("Solo docentes o talleristas pueden editar tareas")
         val original = obtenerTarea(editada.id) ?: return fallo("La tarea no existe")
         if (editada.descripcion.isBlank()) return fallo("La descripción es obligatoria")
