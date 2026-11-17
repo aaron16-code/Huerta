@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.duoc.huertoescolar.RolUsuario
-import cl.duoc.huertoescolar.data.Tarea
+import cl.duoc.huertoescolar.domain.model.RolUsuario
+import cl.duoc.huertoescolar.domain.model.Tarea
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.data.UsuariosPrueba
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal

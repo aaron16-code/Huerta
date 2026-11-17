@@ -4,78 +4,107 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import cl.duoc.huertoescolar.RolUsuario
-import cl.duoc.huertoescolar.data.EstadoTarea
-import cl.duoc.huertoescolar.data.RepositorioOperacion
-import cl.duoc.huertoescolar.data.Tarea
+import cl.duoc.huertoescolar.domain.model.RolUsuario
+import cl.duoc.huertoescolar.domain.model.EstadoTarea
+import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
+import cl.duoc.huertoescolar.domain.model.Tarea
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import kotlinx.coroutines.flow.StateFlow
+import cl.duoc.huertoescolar.domain.repository.TareasRepository
 
-class DetalleTareaViewModel : ViewModel() {
 
-    val tareas: StateFlow<List<Tarea>> = RepositorioOperacion.tareas
-    val tareaId: Int? = RepositorioOperacion.tareaSeleccionadaId
 
-    var comentario by mutableStateOf("")
+
+
+class DetalleTareaViewModel(
+    private val repository: TareasRepository = RepositorioOperacion
+) : ViewModel() {
+
+    val tareas: StateFlow<List<Tarea>> = repository.tareas
+    val tareaId: Int? = repository.tareaSeleccionadaId
+
+    var uiState by mutableStateOf(DetalleTareaUiState())
         private set
-    var fotoUri by mutableStateOf<String?>(null)
-        private set
-    var mostrarConfirmacion by mutableStateOf(false)
-        private set
-    var mensaje by mutableStateOf<String?>(null)
-        private set
-    var mensajeEsError by mutableStateOf(false)
-        private set
+
+    val comentario: String
+        get() = uiState.comentario
+
+    val fotoUri: String?
+        get() = uiState.fotoUri
+
+    val mostrarConfirmacion: Boolean
+        get() = uiState.mostrarConfirmacion
+
+    val mensaje: String?
+        get() = uiState.mensaje
+
+    val mensajeEsError: Boolean
+        get() = uiState.mensajeEsError
 
     fun cambiarComentario(texto: String) {
-        comentario = texto
+        uiState = uiState.copy(comentario = texto)
     }
 
-    /** Guarda la foto que eligió el estudiante (viene de SelectorFoto). */
     fun elegirFoto(uri: String) {
-        fotoUri = uri
-        mensaje = null
+        uiState = uiState.copy(
+            fotoUri = uri,
+            mensaje = null
+        )
     }
 
     fun quitarFoto() {
-        fotoUri = null
+        uiState = uiState.copy(fotoUri = null)
     }
 
     fun pedirConfirmacion() {
-        mostrarConfirmacion = true
+        uiState = uiState.copy(mostrarConfirmacion = true)
     }
 
     fun cancelarConfirmacion() {
-        mostrarConfirmacion = false
+        uiState = uiState.copy(mostrarConfirmacion = false)
     }
 
-    /** Solo el estudiante dueño de la tarea puede enviarla, y solo si está pendiente o rechazada. */
     fun puedeEnviar(tarea: Tarea, usuario: UsuarioPrueba): Boolean {
         val esSuya = tarea.responsableUsuarioId == usuario.id ||
-                (tarea.responsableUsuarioId == null && tarea.grupoAsignado == usuario.grupo)
+                (
+                        tarea.responsableUsuarioId == null &&
+                                tarea.grupoAsignado == usuario.grupo
+                        )
+
         val estadoValido = tarea.estado == EstadoTarea.PENDIENTE ||
                 tarea.estado == EstadoTarea.EN_DESARROLLO ||
                 tarea.estado == EstadoTarea.RECHAZADA
-        return usuario.rol == RolUsuario.ESTUDIANTE && esSuya && estadoValido
+
+        return usuario.rol == RolUsuario.ESTUDIANTE &&
+                esSuya &&
+                estadoValido
     }
 
     fun enviar(usuario: UsuarioPrueba) {
-        mostrarConfirmacion = false
+        uiState = uiState.copy(mostrarConfirmacion = false)
+
         val id = tareaId ?: return
-        val resultado = RepositorioOperacion.marcarRealizada(
+
+        val resultado = repository.marcarRealizada(
             tareaId = id,
             usuarioId = usuario.id,
             grupo = usuario.grupo,
-            comentario = comentario.trim(),
-            fotoUri = fotoUri
+            comentario = uiState.comentario.trim(),
+            fotoUri = uiState.fotoUri
         )
-        if (resultado.isSuccess) {
-            mensaje = "Tarea enviada. Quedó pendiente de validación."
-            mensajeEsError = false
-            comentario = ""
+
+        uiState = if (resultado.isSuccess) {
+            uiState.copy(
+                mensaje = "Tarea enviada. Quedó pendiente de validación.",
+                mensajeEsError = false,
+                comentario = ""
+            )
         } else {
-            mensaje = resultado.exceptionOrNull()?.message ?: "No se pudo enviar la tarea."
-            mensajeEsError = true
+            uiState.copy(
+                mensaje = resultado.exceptionOrNull()?.message
+                    ?: "No se pudo enviar la tarea.",
+                mensajeEsError = true
+            )
         }
     }
 }

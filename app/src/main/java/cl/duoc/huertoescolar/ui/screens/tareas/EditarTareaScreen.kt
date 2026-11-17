@@ -5,7 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.duoc.huertoescolar.RolUsuario
+import cl.duoc.huertoescolar.domain.model.RolUsuario
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto

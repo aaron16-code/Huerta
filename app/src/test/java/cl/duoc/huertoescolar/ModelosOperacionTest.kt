@@ -1,11 +1,12 @@
 package cl.duoc.huertoescolar
 
-import cl.duoc.huertoescolar.data.EstadoLectura
-import cl.duoc.huertoescolar.data.EstadoTarea
-import cl.duoc.huertoescolar.data.Tarea
-import cl.duoc.huertoescolar.data.TipoTarea
+import cl.duoc.huertoescolar.domain.model.EstadoLectura
+import cl.duoc.huertoescolar.domain.model.EstadoTarea
+import cl.duoc.huertoescolar.domain.model.Tarea
+import cl.duoc.huertoescolar.domain.model.TipoTarea
 import cl.duoc.huertoescolar.data.UsuariosPrueba
-import cl.duoc.huertoescolar.data.calcularEstadoLectura
+import cl.duoc.huertoescolar.domain.model.calcularEstadoLectura
+import cl.duoc.huertoescolar.domain.model.RolUsuario
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

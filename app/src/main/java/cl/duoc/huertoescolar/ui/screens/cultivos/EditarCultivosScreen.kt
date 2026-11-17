@@ -1,19 +1,14 @@
 package cl.duoc.huertoescolar.ui.screens.cultivos
 
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.duoc.huertoescolar.EstadoCultivo
-import cl.duoc.huertoescolar.RepositorioHuerto
+import cl.duoc.huertoescolar.domain.model.EstadoCultivo
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
@@ -32,89 +27,50 @@ fun EditarCultivoScreen(
         modifier = modifier
     ) {
         TarjetaHuerto {
-            OutlinedTextField(
-                value = editarViewModel.nombre,
-                onValueChange = { editarViewModel.nombre = it },
-                label = { Text("Nombre del cultivo") },
-                isError = editarViewModel.errorNombre,
-                supportingText = {
-                    if (editarViewModel.errorNombre) Text("El nombre es obligatorio")
+            FormularioCultivo(
+                uiState = editarViewModel.uiState,
+                sectores = editarViewModel.sectores,
+                onNombreChange = {
+                    editarViewModel.nombre = it
                 },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = editarViewModel.descripcion,
-                onValueChange = { editarViewModel.descripcion = it },
-                label = { Text("Descripción") },
-                isError = editarViewModel.errorDescripcion,
-                supportingText = {
-                    if (editarViewModel.errorDescripcion) Text("Ingresa al menos 5 caracteres")
+                onDescripcionChange = {
+                    editarViewModel.descripcion = it
                 },
-                modifier = Modifier.fillMaxWidth()
+                onSectorChange = {
+                    editarViewModel.sectorId = it
+                },
+                onFechaSiembraChange = {
+                    editarViewModel.fechaSiembra = it
+                },
+                onFechaCosechaChange = {
+                    editarViewModel.fechaCosecha = it
+                },
+                onFrecuenciaRiegoChange = {
+                    editarViewModel.frecuenciaRiego = it
+                },
+                onObservacionesChange = {
+                    editarViewModel.observaciones = it
+                },
+                etiquetaObservaciones = "Observaciones",
+                mostrarAyudaFrecuencia = false
             )
 
-            Text("Sector", style = MaterialTheme.typography.titleMedium)
-            RepositorioHuerto.sectores.forEach { sector ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = editarViewModel.sectorId == sector.id,
-                        onClick = { editarViewModel.sectorId = sector.id }
-                    )
-                    Text(sector.nombre)
-                }
-            }
-            if (editarViewModel.errorSector) {
-                Text("Selecciona un sector", color = MaterialTheme.colorScheme.error)
-            }
-
-            OutlinedTextField(
-                value = editarViewModel.fechaSiembra,
-                onValueChange = { editarViewModel.fechaSiembra = it },
-                label = { Text("Fecha de siembra") },
-                placeholder = { Text("DD/MM/AAAA") },
-                isError = editarViewModel.errorFechaSiembra,
-                supportingText = {
-                    if (editarViewModel.errorFechaSiembra) Text("Usa una fecha válida: DD/MM/AAAA")
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = editarViewModel.fechaCosecha,
-                onValueChange = { editarViewModel.fechaCosecha = it },
-                label = { Text("Cosecha estimada") },
-                placeholder = { Text("DD/MM/AAAA") },
-                isError = editarViewModel.errorFechaCosecha,
-                supportingText = {
-                    if (editarViewModel.errorFechaCosecha) {
-                        Text("Usa una fecha válida posterior o igual a la siembra")
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = editarViewModel.frecuenciaRiego,
-                onValueChange = { editarViewModel.frecuenciaRiego = it.filter(Char::isDigit) },
-                label = { Text("Frecuencia de riego") },
-                suffix = { Text("días") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                isError = editarViewModel.errorFrecuencia,
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = editarViewModel.observaciones,
-                onValueChange = { editarViewModel.observaciones = it },
-                label = { Text("Observaciones") },
-                minLines = 3,
-                modifier = Modifier.fillMaxWidth()
+            Text(
+                text = "Estado del cultivo",
+                style = MaterialTheme.typography.titleMedium
             )
 
-            Text("Estado del cultivo", style = MaterialTheme.typography.titleMedium)
             EstadoCultivo.entries.forEach { estado ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     RadioButton(
                         selected = editarViewModel.estado == estado,
-                        onClick = { editarViewModel.estado = estado }
+                        onClick = {
+                            editarViewModel.estado = estado
+                        }
                     )
+
                     Text(estado.textoVisible())
                 }
             }
@@ -122,7 +78,9 @@ fun EditarCultivoScreen(
             BotonPrincipal(
                 texto = "Guardar cambios",
                 onClick = {
-                    if (editarViewModel.guardarCambios()) onCultivoActualizado()
+                    if (editarViewModel.guardarCambios()) {
+                        onCultivoActualizado()
+                    }
                 }
             )
         }

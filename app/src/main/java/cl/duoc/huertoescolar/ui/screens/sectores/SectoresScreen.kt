@@ -9,10 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import cl.duoc.huertoescolar.EstadoSector
-import cl.duoc.huertoescolar.RepositorioHuerto
-import cl.duoc.huertoescolar.RolUsuario
-import cl.duoc.huertoescolar.Sector
+import cl.duoc.huertoescolar.domain.model.EstadoSector
+import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
+import cl.duoc.huertoescolar.domain.model.RolUsuario
+import cl.duoc.huertoescolar.domain.model.Sector
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
 import cl.duoc.huertoescolar.ui.components.BotonSecundario
 import cl.duoc.huertoescolar.ui.components.CuadriculaAdaptable

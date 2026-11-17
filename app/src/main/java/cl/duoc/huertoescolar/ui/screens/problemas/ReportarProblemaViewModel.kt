@@ -4,103 +4,133 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import cl.duoc.huertoescolar.data.RepositorioOperacion
-import cl.duoc.huertoescolar.data.TipoProblema
+import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
+import cl.duoc.huertoescolar.domain.model.TipoProblema
 import cl.duoc.huertoescolar.data.UsuarioPrueba
+import cl.duoc.huertoescolar.domain.repository.ProblemasRepository
 
-class ReportarProblemaViewModel : ViewModel() {
+class ReportarProblemaViewModel(
+    private val repository: ProblemasRepository = RepositorioOperacion
+) : ViewModel() {
 
-    var sectorId by mutableStateOf<Int?>(null)
-        private set
-    var cultivoId by mutableStateOf<Int?>(null)
-        private set
-    var tipo by mutableStateOf(TipoProblema.FALTA_AGUA)
-        private set
-    var descripcion by mutableStateOf("")
-        private set
-    var fotoUri by mutableStateOf<String?>(null)
-        private set
-    var mostrarConfirmacion by mutableStateOf(false)
-        private set
-    var enviado by mutableStateOf(false)
-        private set
-    var mensaje by mutableStateOf<String?>(null)
-        private set
-    var mensajeEsError by mutableStateOf(false)
+    var uiState by mutableStateOf(ReportarProblemaUiState())
         private set
 
-    // Un error por campo: lo decide la lógica, la pantalla solo lo muestra
-    var errorSector by mutableStateOf<String?>(null)
-        private set
-    var errorDescripcion by mutableStateOf<String?>(null)
-        private set
+    val sectorId: Int?
+        get() = uiState.sectorId
+
+    val cultivoId: Int?
+        get() = uiState.cultivoId
+
+    val tipo: TipoProblema
+        get() = uiState.tipo
+
+    val descripcion: String
+        get() = uiState.descripcion
+
+    val fotoUri: String?
+        get() = uiState.fotoUri
+
+    val mostrarConfirmacion: Boolean
+        get() = uiState.mostrarConfirmacion
+
+    val enviado: Boolean
+        get() = uiState.enviado
+
+    val mensaje: String?
+        get() = uiState.mensaje
+
+    val mensajeEsError: Boolean
+        get() = uiState.mensajeEsError
+
+    val errorSector: String?
+        get() = uiState.errorSector
+
+    val errorDescripcion: String?
+        get() = uiState.errorDescripcion
 
     fun elegirSector(id: Int) {
-        sectorId = id
-        cultivoId = null // el cultivo depende del sector
-        errorSector = null
-        mensaje = null
+        uiState = uiState.copy(
+            sectorId = id,
+            cultivoId = null,
+            errorSector = null,
+            mensaje = null
+        )
     }
 
     fun elegirCultivo(id: Int?) {
-        cultivoId = id
+        uiState = uiState.copy(cultivoId = id)
     }
 
     fun elegirTipo(nuevo: TipoProblema) {
-        tipo = nuevo
+        uiState = uiState.copy(tipo = nuevo)
     }
 
     fun cambiarDescripcion(texto: String) {
-        descripcion = texto
-        errorDescripcion = null
+        uiState = uiState.copy(
+            descripcion = texto,
+            errorDescripcion = null
+        )
     }
 
-    /** Guarda la foto que eligió el estudiante (viene de SelectorFotoGaleria). */
     fun elegirFoto(uri: String) {
-        fotoUri = uri
+        uiState = uiState.copy(fotoUri = uri)
     }
 
     fun quitarFoto() {
-        fotoUri = null
+        uiState = uiState.copy(fotoUri = null)
     }
 
-    /** Valida el formulario y, si está bien, pide la confirmación al usuario. */
     fun pedirConfirmacion() {
-        errorSector = if (sectorId == null) "Elige el sector donde viste el problema" else null
-        errorDescripcion =
-            if (descripcion.trim().length < 5) "Describe el problema con al menos 5 caracteres" else null
+        val estadoValidado = validarFormularioProblema(uiState)
+        uiState = estadoValidado
 
-        if (errorSector == null && errorDescripcion == null) {
-            mensaje = null
-            mostrarConfirmacion = true
+        if (
+            estadoValidado.errorSector == null &&
+            estadoValidado.errorDescripcion == null
+        ) {
+            uiState = estadoValidado.copy(
+                mensaje = null,
+                mostrarConfirmacion = true
+            )
         }
     }
 
     fun cancelarConfirmacion() {
-        mostrarConfirmacion = false
+        uiState = uiState.copy(mostrarConfirmacion = false)
     }
 
     fun enviar(usuario: UsuarioPrueba) {
-        mostrarConfirmacion = false
-        val sector = sectorId ?: return
-        val resultado = RepositorioOperacion.reportarProblema(
+        uiState = uiState.copy(mostrarConfirmacion = false)
+
+        val sector = uiState.sectorId ?: return
+
+        val resultado = repository.reportarProblema(
             sectorId = sector,
-            cultivoId = cultivoId,
-            tipo = tipo,
-            descripcion = descripcion.trim(),
+            cultivoId = uiState.cultivoId,
+            tipo = uiState.tipo,
+            descripcion = uiState.descripcion.trim(),
             reportanteId = usuario.id,
-            fotoUri = fotoUri
+            fotoUri = uiState.fotoUri
         )
+
         if (resultado.isSuccess) {
-            enviado = true
-            mensaje = null
+            uiState = uiState.copy(
+                enviado = true,
+                mensaje = null
+            )
         } else {
-            mostrarError(resultado.exceptionOrNull()?.message ?: "No se pudo enviar el reporte.")
+            mostrarError(
+                resultado.exceptionOrNull()?.message
+                    ?: "No se pudo enviar el reporte."
+            )
         }
     }
 
     private fun mostrarError(texto: String) {
-        mensaje = texto
-        mensajeEsError = true
+        uiState = uiState.copy(
+            mensaje = texto,
+            mensajeEsError = true
+        )
     }
 }

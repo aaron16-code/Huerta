@@ -1,14 +1,32 @@
-package cl.duoc.huertoescolar.data
+package cl.duoc.huertoescolar.data.repository
 
-import cl.duoc.huertoescolar.RolUsuario
+import cl.duoc.huertoescolar.data.DatosOperacion
+import cl.duoc.huertoescolar.data.PersistenciaOperacion
+import cl.duoc.huertoescolar.data.semillaLecturas
+import cl.duoc.huertoescolar.data.semillaProblemas
+import cl.duoc.huertoescolar.data.semillaTareas
+import cl.duoc.huertoescolar.domain.model.EstadoLectura
+import cl.duoc.huertoescolar.domain.model.EstadoReporte
+import cl.duoc.huertoescolar.domain.model.EstadoTarea
+import cl.duoc.huertoescolar.domain.model.EventoHistorial
+import cl.duoc.huertoescolar.domain.model.LecturaSensor
+import cl.duoc.huertoescolar.domain.model.Problema
+import cl.duoc.huertoescolar.domain.model.RolUsuario
+import cl.duoc.huertoescolar.domain.model.Tarea
+import cl.duoc.huertoescolar.domain.model.TipoEvento
+import cl.duoc.huertoescolar.domain.model.TipoProblema
+import cl.duoc.huertoescolar.domain.model.TipoTarea
+import cl.duoc.huertoescolar.domain.repository.ProblemasRepository
+import cl.duoc.huertoescolar.domain.repository.TareasRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlin.collections.plusAssign
 
 /**
  * Repositorio en memoria (Persona B): tareas, problemas y lecturas simuladas.
@@ -17,21 +35,20 @@ import kotlinx.coroutines.flow.update
  * IDs fijos acordados: usuario 1=docente, 2-4=estudiantes; sectores 1-3; cultivos 1-4.
  * Usa `RolUsuario` (ADMINISTRADOR, ESTUDIANTE) definido en Modelos.kt del proyecto.
  */
-object RepositorioOperacion : TareasRepository {
+object RepositorioOperacion : TareasRepository, ProblemasRepository {
 
     private const val TAREA_RETIRADA = "Revisar la tapa del invernadero"
     private const val HORA = 60L * 60 * 1000
     private const val DIA = 24 * HORA
     private fun enDias(n: Int) = System.currentTimeMillis() + n * DIA
-    private fun haceHoras(h: Int) = System.currentTimeMillis() - h * HORA
     private fun fallo(msg: String) = Result.failure<Unit>(IllegalStateException(msg))
 
     private val _tareas = MutableStateFlow(semillaTareas())
     override val tareas: StateFlow<List<Tarea>> = _tareas.asStateFlow()
 
     private val _problemas = MutableStateFlow(semillaProblemas())
-    val problemas: StateFlow<List<Problema>> = _problemas.asStateFlow()
-
+    override val problemas: StateFlow<List<Problema>> =
+        _problemas.asStateFlow()
     private val _lecturas = MutableStateFlow(semillaLecturas())
     val lecturas: StateFlow<List<LecturaSensor>> = _lecturas.asStateFlow()
 
@@ -52,7 +69,13 @@ object RepositorioOperacion : TareasRepository {
             try {
                 val guardado = destino.cargar()
                 if (guardado == null) {
-                    destino.guardarSemilla(DatosOperacion(_tareas.value, _problemas.value, _lecturas.value))
+                    destino.guardarSemilla(
+                        DatosOperacion(
+                            _tareas.value,
+                            _problemas.value,
+                            _lecturas.value
+                        )
+                    )
                 } else {
                     val tareasRetiradas = guardado.tareas.filter { it.descripcion == TAREA_RETIRADA }
                     _tareas.value = guardado.tareas.filterNot { it.descripcion == TAREA_RETIRADA }
@@ -133,7 +156,7 @@ object RepositorioOperacion : TareasRepository {
     }
 
     /** El estudiante marca como realizada: queda PENDIENTE DE VALIDACIÓN (no se valida sola). */
-    fun marcarRealizada(tareaId: Int, usuarioId: Int, grupo: String, comentario: String, fotoUri: String?): Result<Unit> {
+    override fun marcarRealizada(tareaId: Int, usuarioId: Int, grupo: String, comentario: String, fotoUri: String?): Result<Unit> {
         val t = obtenerTarea(tareaId) ?: return fallo("La tarea no existe")
         val esSuya = t.responsableUsuarioId == usuarioId ||
                 (t.responsableUsuarioId == null && t.grupoAsignado == grupo)
@@ -156,7 +179,7 @@ object RepositorioOperacion : TareasRepository {
     }
 
     /** Validar o rechazar. Reglas del caso: solo ADMINISTRADOR y nunca su propia actividad. */
-    fun validarTarea(tareaId: Int, validadorId: Int, rol: RolUsuario, aprobada: Boolean, comentario: String): Result<Unit> {
+    override fun validarTarea(tareaId: Int, validadorId: Int, rol: RolUsuario, aprobada: Boolean, comentario: String): Result<Unit> {
         if (rol != RolUsuario.ADMINISTRADOR) return fallo("Solo docentes o talleristas pueden validar")
         val t = obtenerTarea(tareaId) ?: return fallo("La tarea no existe")
         if (t.estado != EstadoTarea.PENDIENTE_VALIDACION) return fallo("La tarea no está pendiente de validación")
@@ -180,16 +203,25 @@ object RepositorioOperacion : TareasRepository {
 
     // ---------- PROBLEMAS ----------
 
-    fun reportarProblema(sectorId: Int, cultivoId: Int?, tipo: TipoProblema, descripcion: String, reportanteId: Int, fotoUri: String?): Result<Unit> {
+    override fun reportarProblema(sectorId: Int, cultivoId: Int?, tipo: TipoProblema, descripcion: String, reportanteId: Int, fotoUri: String?): Result<Unit> {
         if (descripcion.isBlank()) return fallo("Describe brevemente el problema")
         val id = (_problemas.value.maxOfOrNull { it.id } ?: 0) + 1
-        val nuevo = Problema(id, sectorId, cultivoId, tipo, descripcion, System.currentTimeMillis(), reportanteId, fotoUri)
+        val nuevo = Problema(
+            id,
+            sectorId,
+            cultivoId,
+            tipo,
+            descripcion,
+            System.currentTimeMillis(),
+            reportanteId,
+            fotoUri
+        )
         _problemas.update { it + nuevo }
         guardar { it.insertarProblema(nuevo) }
         return Result.success(Unit)
     }
 
-    fun actualizarProblema(id: Int, rol: RolUsuario, nuevoEstado: EstadoReporte, comentario: String): Result<Unit> {
+    override fun actualizarProblema(id: Int, rol: RolUsuario, nuevoEstado: EstadoReporte, comentario: String): Result<Unit> {
         if (rol != RolUsuario.ADMINISTRADOR) return fallo("Solo docentes o talleristas pueden dar seguimiento")
         _problemas.update { lista ->
             lista.map {
@@ -235,65 +267,50 @@ object RepositorioOperacion : TareasRepository {
 
     fun historial(): List<EventoHistorial> {
         val eventos = mutableListOf<EventoHistorial>()
-        _tareas.value.forEach { t ->
-            t.fechaRealizacion?.let {
-                eventos += EventoHistorial(it, TipoEvento.TAREA, "Tarea realizada: ${t.tipo.etiqueta}", t.comentarioEstudiante, t.fotoUri)
+
+        _tareas.value.forEach { tarea ->
+            tarea.fechaRealizacion?.let { fecha ->
+                eventos.add(
+                    EventoHistorial(
+                        fecha,
+                        TipoEvento.TAREA,
+                        "Tarea realizada: ${tarea.tipo.etiqueta}",
+                        tarea.comentarioEstudiante,
+                        tarea.fotoUri
+                    )
+                )
             }
-            t.fechaValidacion?.let {
-                val res = if (t.estado == EstadoTarea.VALIDADA) "validada" else "rechazada"
-                eventos += EventoHistorial(it, TipoEvento.VALIDACION, "Tarea $res: ${t.tipo.etiqueta}", t.comentarioDocente)
+
+            tarea.fechaValidacion?.let { fecha ->
+                val resultado = if (tarea.estado == EstadoTarea.VALIDADA) {
+                    "validada"
+                } else {
+                    "rechazada"
+                }
+
+                eventos.add(
+                    EventoHistorial(
+                        fecha,
+                        TipoEvento.VALIDACION,
+                        "Tarea $resultado: ${tarea.tipo.etiqueta}",
+                        tarea.comentarioDocente
+                    )
+                )
             }
         }
-        _problemas.value.forEach { p ->
-            eventos += EventoHistorial(p.fechaReporte, TipoEvento.PROBLEMA, "Problema reportado: ${p.tipo.etiqueta}", p.descripcion, p.fotoUri)
+
+        _problemas.value.forEach { problema ->
+            eventos.add(
+                EventoHistorial(
+                    problema.fechaReporte,
+                    TipoEvento.PROBLEMA,
+                    "Problema reportado: ${problema.tipo.etiqueta}",
+                    problema.descripcion,
+                    problema.fotoUri
+                )
+            )
         }
+
         return eventos.sortedByDescending { it.fecha }
     }
-
-    // ---------- DATOS FICTICIOS ----------
-
-    private fun semillaTareas() = listOf(
-        Tarea(1, TipoTarea.RIEGO, "Regar la lechuga", "Riega con regadera hasta humedecer la tierra, sin encharcar.",
-            1, 1, enDias(-6), enDias(-2), responsableUsuarioId = 2, creadaPorId = 1),
-        Tarea(2, TipoTarea.RETIRO_MALEZAS, "Retirar malezas del sector norte", "Saca las malezas a mano y ponlas en el balde.",
-            1, null, enDias(-1), enDias(1), responsableUsuarioId = 2, creadaPorId = 1),
-        Tarea(3, TipoTarea.OBSERVACION, "Observar el tomate", "Revisa hojas y tallo y anota cómo se ve la planta.",
-            2, 2, enDias(-4), enDias(-1), responsableUsuarioId = 3, creadaPorId = 1,
-            estado = EstadoTarea.PENDIENTE_VALIDACION, fechaRealizacion = haceHoras(5), realizadaPorId = 3,
-            fotoUri = "foto_prueba_tomate", comentarioEstudiante = "Las hojas se ven verdes y firmes."),
-        Tarea(4, TipoTarea.SIEMBRA, "Sembrar zanahoria", "Haz surcos de 2 cm y deja caer las semillas separadas.",
-            1, 3, enDias(-9), enDias(-5), responsableUsuarioId = 2, creadaPorId = 1,
-            estado = EstadoTarea.VALIDADA, fechaRealizacion = enDias(-5), realizadaPorId = 2,
-            comentarioEstudiante = "Listo, sembrado.", comentarioDocente = "Muy bien, buen espaciado.",
-            validadorId = 1, fechaValidacion = enDias(-4)),
-        Tarea(5, TipoTarea.RIEGO, "Regar la albahaca del invernadero", "Un vaso de agua por maceta.",
-            3, 4, enDias(-1), enDias(1), grupoAsignado = "Taller Huerto A", creadaPorId = 1),
-        Tarea(6, TipoTarea.LIMPIEZA, "Limpiar el sector sur", "Recoge hojas secas y restos.",
-            2, null, enDias(-7), enDias(-3), responsableUsuarioId = 2, creadaPorId = 1,
-            estado = EstadoTarea.RECHAZADA, fechaRealizacion = enDias(-3), realizadaPorId = 2,
-            comentarioEstudiante = "Terminé.", comentarioDocente = "Faltó retirar los restos del fondo. Repítela.",
-            validadorId = 1, fechaValidacion = enDias(-2)),
-        Tarea(8, TipoTarea.COSECHA, "Cosechar la lechuga", "Corta las hojas exteriores con cuidado.",
-            1, 1, enDias(-1), enDias(6), responsableUsuarioId = 4, creadaPorId = 1)
-    )
-
-    private fun semillaProblemas() = listOf(
-        Problema(1, 1, 1, TipoProblema.FALTA_AGUA, "La tierra de la lechuga está muy seca.",
-            haceHoras(8), 2, "foto_prueba_lechuga"),
-        Problema(2, 2, 2, TipoProblema.PLAGA_SIMULADA, "Se ven manchas en las hojas del tomate (prueba).",
-            haceHoras(30), 3, null, EstadoReporte.EN_REVISION, "Lo estamos revisando."),
-        Problema(3, 3, null, TipoProblema.DETERIORO_SECTOR, "La tapa del invernadero estaba floja.",
-            haceHoras(80), 2, null, EstadoReporte.CERRADO, "Se ajustó la tapa.", haceHoras(50))
-    )
-
-    private fun lectura(id: Int, sector: Int, horas: Int, suelo: Int, temp: Double, amb: Int) =
-        LecturaSensor(id, sector, haceHoras(horas), suelo, temp, amb, calcularEstadoLectura(suelo, temp, amb))
-
-    private fun semillaLecturas() = listOf(
-        lectura(1, 1, 1, 55, 21.5, 60),   // normal
-        lectura(2, 2, 1, 22, 24.0, 55),   // humedad de suelo baja
-        lectura(3, 3, 1, 60, 33.5, 70),   // temperatura alta
-        lectura(4, 1, 25, 48, 19.0, 65),  // normal (día anterior)
-        lectura(5, 2, 2, 105, 22.0, 50)   // valor inválido -> pendiente de revisión
-    )
 }

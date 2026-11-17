@@ -2,9 +2,9 @@ package cl.duoc.huertoescolar.data.operacion
 
 import android.content.Context
 import cl.duoc.huertoescolar.data.DatosOperacion
-import cl.duoc.huertoescolar.data.Problema
+import cl.duoc.huertoescolar.domain.model.Problema
 import cl.duoc.huertoescolar.data.PersistenciaOperacion
-import cl.duoc.huertoescolar.data.Tarea
+import cl.duoc.huertoescolar.domain.model.Tarea
 
 /** Guarda y carga los datos del módulo de operación usando Room. */
 class PersistenciaRoom(contexto: Context) : PersistenciaOperacion {

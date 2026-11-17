@@ -11,3 +11,13 @@ fun validarDescripcionSector(descripcion: String): Boolean {
 fun validarUbicacionSector(ubicacion: String): Boolean {
     return ubicacion.isNotBlank()
 }
+
+fun validarFormularioSector(
+    estado: SectorFormUiState
+): SectorFormUiState {
+    return estado.copy(
+        errorNombre = !validarNombreSector(estado.nombre),
+        errorDescripcion = !validarDescripcionSector(estado.descripcion),
+        errorUbicacion = !validarUbicacionSector(estado.ubicacion)
+    )
+}

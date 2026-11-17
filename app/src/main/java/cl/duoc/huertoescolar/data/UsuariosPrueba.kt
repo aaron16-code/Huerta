@@ -1,6 +1,6 @@
 package cl.duoc.huertoescolar.data
 
-import cl.duoc.huertoescolar.RolUsuario
+import cl.duoc.huertoescolar.domain.model.RolUsuario
 
 data class UsuarioPrueba(
     val id: Int,

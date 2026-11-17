@@ -39,3 +39,27 @@ fun validarFrecuenciaRiego(frecuencia: String): Boolean {
     val dias = frecuencia.toIntOrNull()
     return dias != null && dias > 0
 }
+
+fun validarFormularioCultivo(
+    estado: CultivoFormUiState
+): CultivoFormUiState {
+    return estado.copy(
+        errorNombre = !validarNombreCultivo(estado.nombre),
+        errorDescripcion = !validarDescripcionCultivo(
+            estado.descripcion
+        ),
+        errorSector = estado.sectorId == null,
+        errorFechaSiembra = !validarFechaCultivo(
+            estado.fechaSiembra
+        ),
+        errorFechaCosecha = !validarFechaCultivo(
+            estado.fechaCosecha
+        ) || !validarOrdenFechasCultivo(
+            estado.fechaSiembra,
+            estado.fechaCosecha
+        ),
+        errorFrecuencia = !validarFrecuenciaRiego(
+            estado.frecuenciaRiego
+        )
+    )
+}

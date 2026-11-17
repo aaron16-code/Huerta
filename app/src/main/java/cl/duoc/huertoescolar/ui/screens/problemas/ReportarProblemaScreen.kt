@@ -27,8 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.duoc.huertoescolar.RepositorioHuerto
-import cl.duoc.huertoescolar.data.TipoProblema
+import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
+import cl.duoc.huertoescolar.domain.model.TipoProblema
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto

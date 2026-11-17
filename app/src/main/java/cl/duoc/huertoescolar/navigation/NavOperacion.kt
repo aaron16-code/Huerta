@@ -1,4 +1,4 @@
-package cl.duoc.huertoescolar
+package cl.duoc.huertoescolar.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -6,7 +6,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import cl.duoc.huertoescolar.data.RepositorioOperacion
+import cl.duoc.huertoescolar.domain.model.RolUsuario
+import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.data.nombreDeCultivo
 import cl.duoc.huertoescolar.data.nombreDeSector

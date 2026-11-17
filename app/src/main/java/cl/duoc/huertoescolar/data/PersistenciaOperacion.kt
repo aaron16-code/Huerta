@@ -1,5 +1,9 @@
 package cl.duoc.huertoescolar.data
 
+import cl.duoc.huertoescolar.domain.model.LecturaSensor
+import cl.duoc.huertoescolar.domain.model.Problema
+import cl.duoc.huertoescolar.domain.model.Tarea
+
 /** Todo lo que se guarda del módulo de operación. */
 data class DatosOperacion(
     val tareas: List<Tarea>,

@@ -4,8 +4,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import cl.duoc.huertoescolar.EstadoSector
-import cl.duoc.huertoescolar.RepositorioHuerto
+import cl.duoc.huertoescolar.domain.model.EstadoSector
+import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto

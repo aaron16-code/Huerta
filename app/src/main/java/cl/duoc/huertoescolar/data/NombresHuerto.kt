@@ -1,6 +1,6 @@
 package cl.duoc.huertoescolar.data
 
-import cl.duoc.huertoescolar.RepositorioHuerto
+import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
 
 /** Nombre real del sector (lo lee de RepositorioHuerto). Si no existe, muestra un texto genérico. */
 fun nombreDeSector(id: Int): String =
