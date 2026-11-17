@@ -1,19 +1,31 @@
 package cl.duoc.huertoescolar.ui.screens.sectores
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import cl.duoc.huertoescolar.data.remote.SectorRequest
+import cl.duoc.huertoescolar.data.repository.HuertoRemoteRepository
 import cl.duoc.huertoescolar.domain.model.EstadoSector
-import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
-import cl.duoc.huertoescolar.domain.model.Sector
-import cl.duoc.huertoescolar.domain.repository.SectoresRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 class SectorViewModel(
-    private val repository: SectoresRepository = RepositorioHuerto
+    private val repository: HuertoRemoteRepository = HuertoRemoteRepository()
 ) : ViewModel() {
 
     var uiState by mutableStateOf(SectorFormUiState())
+        private set
+
+    var guardando by mutableStateOf(false)
+        private set
+
+    var sectorCreado by mutableStateOf(false)
+        private set
+
+    var errorGuardado by mutableStateOf<String?>(null)
         private set
 
     var nombre: String
@@ -44,29 +56,41 @@ class SectorViewModel(
         get() = uiState.errorUbicacion
 
     fun validarFormulario(): Boolean {
-        val estadoValidado = validarFormularioSector(uiState)
-        uiState = estadoValidado
+        uiState = validarFormularioSector(uiState)
 
-        return !estadoValidado.errorNombre &&
-                !estadoValidado.errorDescripcion &&
-                !estadoValidado.errorUbicacion
+        return !uiState.errorNombre &&
+                !uiState.errorDescripcion &&
+                !uiState.errorUbicacion
     }
 
-    fun guardarSector(): Boolean {
-        if (!validarFormulario()) {
-            return false
-        }
+    fun guardarSector() {
+        if (guardando || sectorCreado) return
+        if (!validarFormulario()) return
 
-        val nuevoSector = Sector(
-            id = repository.obtenerSiguienteId(),
+        val solicitud = SectorRequest(
             nombre = uiState.nombre.trim(),
             descripcion = uiState.descripcion.trim(),
             ubicacion = uiState.ubicacion.trim(),
-            estado = EstadoSector.DISPONIBLE,
-            responsable = "Docente de prueba"
+            estado = EstadoSector.DISPONIBLE.name,
+            responsableId = 1
         )
 
-        repository.agregarSector(nuevoSector)
-        return true
+        guardando = true
+        errorGuardado = null
+
+        viewModelScope.launch {
+            try {
+                repository.crearSector(solicitud)
+                sectorCreado = true
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("HuertoAPI", "Error al crear sector", e)
+                errorGuardado =
+                    "No se pudo confirmar el guardado. Actualiza la lista antes de volver a intentarlo."
+            } finally {
+                guardando = false
+            }
+        }
     }
 }

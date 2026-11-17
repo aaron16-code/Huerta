@@ -4,8 +4,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.huertoescolar.domain.model.EstadoCultivo
-import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
+import cl.duoc.huertoescolar.ui.components.BotonSecundario
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
@@ -13,10 +14,11 @@ import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
 @Composable
 fun DetalleCultivoScreen(
     onVolver: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    detalleViewModel: DetalleCultivoViewModel = viewModel()
 ) {
-    val cultivo = RepositorioHuerto.cultivoSeleccionado
-    val sector = RepositorioHuerto.sectores.find { it.id == cultivo?.sectorId }
+    val cultivo = detalleViewModel.cultivo
+
     val estadoTexto = when (cultivo?.estado) {
         EstadoCultivo.PLANIFICADO -> "Planificado"
         EstadoCultivo.SEMBRADO -> "Sembrado"
@@ -35,14 +37,51 @@ fun DetalleCultivoScreen(
     ) {
         TarjetaHuerto {
             if (cultivo != null) {
-                Text(cultivo.nombre, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = cultivo.nombre,
+                    style = MaterialTheme.typography.titleLarge
+                )
+
                 EtiquetaEstado(estadoTexto)
                 Text(cultivo.descripcion)
-                Text("Sector: ${sector?.nombre ?: "Sin sector"}")
+
+                when {
+                    detalleViewModel.cargandoSector -> {
+                        Text("Sector: cargando...")
+                    }
+
+                    detalleViewModel.errorSector != null -> {
+                        Text("Sector: #${cultivo.sectorId}")
+
+                        Text(
+                            text = detalleViewModel.errorSector.orEmpty(),
+                            color = MaterialTheme.colorScheme.error
+                        )
+
+                        BotonSecundario(
+                            texto = "Reintentar",
+                            onClick = detalleViewModel::cargarSector
+                        )
+                    }
+
+                    else -> {
+                        Text(
+                            text = "Sector: ${
+                                detalleViewModel.nombreSector
+                                    ?: "#${cultivo.sectorId}"
+                            }"
+                        )
+                    }
+                }
+
                 Text("Fecha de siembra: ${cultivo.fechaSiembra}")
                 Text("Cosecha estimada: ${cultivo.fechaCosechaEstimada}")
                 Text("Riego cada ${cultivo.frecuenciaRiegoDias} días")
-                Text("Observaciones: ${cultivo.observaciones}")
+                Text(
+                    text = "Observaciones: ${
+                        cultivo.observaciones.ifBlank { "Sin observaciones" }
+                    }"
+                )
             } else {
                 Text("No se encontró el cultivo")
             }
