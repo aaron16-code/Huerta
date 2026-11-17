@@ -1,7 +1,7 @@
-package cl.duoc.huertoescolar.data
+package cl.duoc.huertoescolar.domain.repository
 
-import cl.duoc.huertoescolar.Cultivo
-import cl.duoc.huertoescolar.Sector
+import cl.duoc.huertoescolar.domain.model.Cultivo
+import cl.duoc.huertoescolar.domain.model.Sector
 
 /** Datos del huerto que necesita el formulario de tareas. */
 interface CatalogoHuertoRepository {

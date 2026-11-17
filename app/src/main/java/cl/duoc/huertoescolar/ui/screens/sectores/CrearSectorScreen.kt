@@ -1,8 +1,5 @@
 package cl.duoc.huertoescolar.ui.screens.sectores
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,40 +21,19 @@ fun CrearSectorScreen(
         modifier = modifier
     ) {
         TarjetaHuerto {
-            OutlinedTextField(
-                value = sectorViewModel.nombre,
-                onValueChange = { sectorViewModel.nombre = it },
-                label = { Text("Nombre") },
-                isError = sectorViewModel.errorNombre,
-                supportingText = {
-                    if (sectorViewModel.errorNombre) Text("El nombre es obligatorio")
-                },
-                modifier = Modifier.fillMaxWidth()
+            FormularioSector(
+                uiState = sectorViewModel.uiState,
+                onNombreChange = { sectorViewModel.nombre = it },
+                onDescripcionChange = { sectorViewModel.descripcion = it },
+                onUbicacionChange = { sectorViewModel.ubicacion = it }
             )
-            OutlinedTextField(
-                value = sectorViewModel.descripcion,
-                onValueChange = { sectorViewModel.descripcion = it },
-                label = { Text("Descripción") },
-                isError = sectorViewModel.errorDescripcion,
-                supportingText = {
-                    if (sectorViewModel.errorDescripcion) Text("Ingresa al menos 5 caracteres")
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = sectorViewModel.ubicacion,
-                onValueChange = { sectorViewModel.ubicacion = it },
-                label = { Text("Ubicación") },
-                isError = sectorViewModel.errorUbicacion,
-                supportingText = {
-                    if (sectorViewModel.errorUbicacion) Text("La ubicación es obligatoria")
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+
             BotonPrincipal(
                 texto = "Guardar sector",
                 onClick = {
-                    if (sectorViewModel.guardarSector()) onSectorCreado()
+                    if (sectorViewModel.guardarSector()) {
+                        onSectorCreado()
+                    }
                 }
             )
         }

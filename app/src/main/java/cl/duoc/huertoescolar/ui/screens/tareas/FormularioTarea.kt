@@ -26,9 +26,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cl.duoc.huertoescolar.Cultivo
-import cl.duoc.huertoescolar.Sector
-import cl.duoc.huertoescolar.data.TipoTarea
+import cl.duoc.huertoescolar.domain.model.Cultivo
+import cl.duoc.huertoescolar.domain.model.Sector
+import cl.duoc.huertoescolar.domain.model.TipoTarea
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
 
 /** Formulario reutilizado al crear y editar una tarea. */

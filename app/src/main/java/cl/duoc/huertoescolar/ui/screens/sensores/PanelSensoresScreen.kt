@@ -14,9 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.duoc.huertoescolar.RolUsuario
-import cl.duoc.huertoescolar.data.EstadoLectura
-import cl.duoc.huertoescolar.data.LecturaSensor
+import cl.duoc.huertoescolar.domain.model.RolUsuario
+import cl.duoc.huertoescolar.domain.model.EstadoLectura
+import cl.duoc.huertoescolar.domain.model.LecturaSensor
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.components.CuadriculaAdaptable
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado

@@ -1,4 +1,4 @@
-package cl.duoc.huertoescolar
+package cl.duoc.huertoescolar.navigation
 
 object Rutas {
     const val LOGIN = "login"

@@ -1,6 +1,6 @@
 package cl.duoc.huertoescolar
 
-import cl.duoc.huertoescolar.data.RepositorioOperacion
+import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
 import cl.duoc.huertoescolar.data.UsuariosPrueba
 import cl.duoc.huertoescolar.ui.screens.tareas.CrearTareaViewModel
 import cl.duoc.huertoescolar.ui.screens.tareas.parsearFechaFinDelDia

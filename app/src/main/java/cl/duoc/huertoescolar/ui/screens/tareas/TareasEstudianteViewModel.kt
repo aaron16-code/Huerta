@@ -4,9 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import cl.duoc.huertoescolar.data.EstadoTarea
-import cl.duoc.huertoescolar.data.RepositorioOperacion
-import cl.duoc.huertoescolar.data.Tarea
+import cl.duoc.huertoescolar.domain.model.EstadoTarea
+import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
+import cl.duoc.huertoescolar.domain.model.Tarea
 import kotlinx.coroutines.flow.StateFlow
 
 enum class FiltroTareas(val etiqueta: String) {

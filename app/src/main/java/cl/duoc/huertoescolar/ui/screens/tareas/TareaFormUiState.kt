@@ -1,6 +1,6 @@
 package cl.duoc.huertoescolar.ui.screens.tareas
 
-import cl.duoc.huertoescolar.data.TipoTarea
+import cl.duoc.huertoescolar.domain.model.TipoTarea
 
 /** Opción de asignación presentada al docente. */
 data class DestinatarioTareaUi(

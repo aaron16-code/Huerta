@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.duoc.huertoescolar.data.EventoHistorial
-import cl.duoc.huertoescolar.data.TipoEvento
+import cl.duoc.huertoescolar.domain.model.EventoHistorial
+import cl.duoc.huertoescolar.domain.model.TipoEvento
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.components.CuadriculaAdaptable
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado

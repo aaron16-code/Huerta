@@ -4,11 +4,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import cl.duoc.huertoescolar.data.RepositorioOperacion
-import cl.duoc.huertoescolar.RepositorioHuerto
-import cl.duoc.huertoescolar.data.CatalogoHuertoRepository
-import cl.duoc.huertoescolar.data.TareasRepository
-import cl.duoc.huertoescolar.data.TipoTarea
+import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
+import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
+import cl.duoc.huertoescolar.domain.repository.CatalogoHuertoRepository
+import cl.duoc.huertoescolar.domain.repository.TareasRepository
+import cl.duoc.huertoescolar.domain.model.TipoTarea
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 
 class EditarTareaViewModel(

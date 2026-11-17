@@ -3,7 +3,7 @@ package cl.duoc.huertoescolar.ui.screens.perfil
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import cl.duoc.huertoescolar.RolUsuario
+import cl.duoc.huertoescolar.domain.model.RolUsuario
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto

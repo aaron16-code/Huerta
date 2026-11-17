@@ -1,7 +1,4 @@
-package cl.duoc.huertoescolar.data
-
-// Modelos del módulo de operación (Persona B).
-// Las fechas son epoch millis (Long): funcionan con minSdk 24 sin librerías extra.
+package cl.duoc.huertoescolar.domain.model
 
 enum class TipoTarea(val etiqueta: String) {
     PREPARACION_SECTOR("Preparación del sector"),
