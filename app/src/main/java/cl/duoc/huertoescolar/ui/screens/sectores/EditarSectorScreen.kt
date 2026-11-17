@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -20,6 +21,12 @@ fun EditarSectorScreen(
     modifier: Modifier = Modifier,
     editarViewModel: EditarSectorViewModel = viewModel()
 ) {
+    LaunchedEffect(editarViewModel.sectorActualizado) {
+        if (editarViewModel.sectorActualizado) {
+            onSectorActualizado()
+        }
+    }
+
     PantallaHuerto(
         titulo = "Editar sector",
         subtitulo = "Actualiza la información y disponibilidad de la zona.",
@@ -29,9 +36,15 @@ fun EditarSectorScreen(
         TarjetaHuerto {
             FormularioSector(
                 uiState = editarViewModel.uiState,
-                onNombreChange = { editarViewModel.nombre = it },
-                onDescripcionChange = { editarViewModel.descripcion = it },
-                onUbicacionChange = { editarViewModel.ubicacion = it }
+                onNombreChange = {
+                    editarViewModel.nombre = it
+                },
+                onDescripcionChange = {
+                    editarViewModel.descripcion = it
+                },
+                onUbicacionChange = {
+                    editarViewModel.ubicacion = it
+                }
             )
 
             Text(
@@ -45,7 +58,10 @@ fun EditarSectorScreen(
                 ) {
                     RadioButton(
                         selected = editarViewModel.estado == estado,
-                        onClick = { editarViewModel.estado = estado }
+                        enabled = !editarViewModel.guardando,
+                        onClick = {
+                            editarViewModel.estado = estado
+                        }
                     )
 
                     Text(
@@ -59,12 +75,21 @@ fun EditarSectorScreen(
                 }
             }
 
+            editarViewModel.errorGuardado?.let { mensaje ->
+                Text(
+                    text = mensaje,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
             BotonPrincipal(
-                texto = "Guardar cambios",
+                texto = if (editarViewModel.guardando) {
+                    "Guardando..."
+                } else {
+                    "Guardar cambios"
+                },
                 onClick = {
-                    if (editarViewModel.guardarCambios()) {
-                        onSectorActualizado()
-                    }
+                    editarViewModel.guardarCambios()
                 }
             )
         }

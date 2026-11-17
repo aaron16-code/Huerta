@@ -1,6 +1,9 @@
 package cl.duoc.huertoescolar.ui.screens.sectores
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
@@ -14,6 +17,12 @@ fun CrearSectorScreen(
     modifier: Modifier = Modifier,
     sectorViewModel: SectorViewModel = viewModel()
 ) {
+    LaunchedEffect(sectorViewModel.sectorCreado) {
+        if (sectorViewModel.sectorCreado) {
+            onSectorCreado()
+        }
+    }
+
     PantallaHuerto(
         titulo = "Crear sector",
         subtitulo = "Registra una nueva zona de trabajo para el huerto.",
@@ -23,17 +32,32 @@ fun CrearSectorScreen(
         TarjetaHuerto {
             FormularioSector(
                 uiState = sectorViewModel.uiState,
-                onNombreChange = { sectorViewModel.nombre = it },
-                onDescripcionChange = { sectorViewModel.descripcion = it },
-                onUbicacionChange = { sectorViewModel.ubicacion = it }
+                onNombreChange = {
+                    sectorViewModel.nombre = it
+                },
+                onDescripcionChange = {
+                    sectorViewModel.descripcion = it
+                },
+                onUbicacionChange = {
+                    sectorViewModel.ubicacion = it
+                }
             )
 
+            sectorViewModel.errorGuardado?.let { mensaje ->
+                Text(
+                    text = mensaje,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
             BotonPrincipal(
-                texto = "Guardar sector",
+                texto = if (sectorViewModel.guardando) {
+                    "Guardando..."
+                } else {
+                    "Guardar sector"
+                },
                 onClick = {
-                    if (sectorViewModel.guardarSector()) {
-                        onSectorCreado()
-                    }
+                    sectorViewModel.guardarSector()
                 }
             )
         }

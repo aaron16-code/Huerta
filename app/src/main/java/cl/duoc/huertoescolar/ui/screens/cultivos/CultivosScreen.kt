@@ -6,20 +6,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.huertoescolar.domain.model.Cultivo
 import cl.duoc.huertoescolar.domain.model.EstadoCultivo
-import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
 import cl.duoc.huertoescolar.domain.model.RolUsuario
-import cl.duoc.huertoescolar.ui.components.BotonPrincipal
 import cl.duoc.huertoescolar.ui.components.BotonSecundario
 import cl.duoc.huertoescolar.ui.components.CuadriculaAdaptable
-import cl.duoc.huertoescolar.ui.components.DosColumnasAdaptables
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
+import cl.duoc.huertoescolar.ui.components.BotonPrincipal
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 
 @Composable
 fun CultivosScreen(
@@ -29,60 +32,94 @@ fun CultivosScreen(
     onVerDetalle: (Cultivo) -> Unit,
     onVolver: () -> Unit
 ) {
-    val esDocente = rol == RolUsuario.ADMINISTRADOR
-    val cultivos = RepositorioHuerto.cultivos.toList()
+    val listaViewModel: ListaCultivosViewModel = viewModel()
+    val uiState by listaViewModel.uiState.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        listaViewModel.cargarCultivos()
+    }
 
     PantallaHuerto(
         titulo = "Cultivos",
         subtitulo = "Consulta las siembras, su estado y frecuencia de riego.",
         onVolver = onVolver
     ) {
-        if (esDocente) {
+        if (rol == RolUsuario.ADMINISTRADOR) {
             BotonPrincipal(
                 texto = "Crear cultivo",
                 onClick = onCrearCultivo
             )
         }
+        when {
+            uiState.cargando -> {
+                Text("Cargando cultivos...")
+            }
 
-        Text(
-            text = "Cultivos registrados: ${cultivos.size}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        if (cultivos.isEmpty()) {
-            TarjetaHuerto {
+            uiState.error != null -> {
                 Text(
-                    text = "Todavía no hay cultivos",
-                    style = MaterialTheme.typography.titleMedium
+                    text = uiState.error.orEmpty(),
+                    color = MaterialTheme.colorScheme.error
                 )
 
-                Text(
-                    text = if (esDocente) {
-                        "Registra el primer cultivo para comenzar su seguimiento."
-                    } else {
-                        "Aquí aparecerán los cultivos que registre tu docente."
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                BotonSecundario(
+                    texto = "Reintentar",
+                    onClick = listaViewModel::cargarCultivos
                 )
             }
-        } else {
-            CuadriculaAdaptable(
-                elementos = cultivos,
-                anchoMinimo = 280.dp,
-                maxColumnas = 2
-            ) { cultivo ->
-                val sector = RepositorioHuerto.sectores.find {
-                    it.id == cultivo.sectorId
-                }
 
-                TarjetaCultivoAdaptable(
-                    cultivo = cultivo,
-                    nombreSector = sector?.nombre ?: "Sin sector",
-                    esDocente = esDocente,
-                    onVerDetalle = { onVerDetalle(cultivo) },
-                    onEditar = { onEditarCultivo(cultivo) }
+            else -> {
+                Text(
+                    text = "Cultivos registrados: ${uiState.cultivos.size}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
+
+                BotonSecundario(
+                    texto = "Actualizar lista",
+                    onClick = listaViewModel::cargarCultivos
+                )
+
+                if (uiState.cultivos.isEmpty()) {
+                    TarjetaHuerto {
+                        Text(
+                            text = "Todavía no hay cultivos",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        Text(
+                            text = "Aquí aparecerán los cultivos registrados.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    CuadriculaAdaptable(
+                        elementos = uiState.cultivos,
+                        anchoMinimo = 280.dp,
+                        maxColumnas = 2
+                    ) { cultivo ->
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            TarjetaCultivoAdaptable(
+                                cultivo = cultivo,
+                                nombreSector = uiState.nombresSectores[
+                                    cultivo.sectorId
+                                ] ?: "Sector #${cultivo.sectorId}",
+                                onVerDetalle = {
+                                    onVerDetalle(cultivo)
+                                }
+                            )
+
+                            if (rol == RolUsuario.ADMINISTRADOR) {
+                                BotonPrincipal(
+                                    texto = "Editar cultivo",
+                                    onClick = {
+                                        onEditarCultivo(cultivo)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -92,9 +129,7 @@ fun CultivosScreen(
 private fun TarjetaCultivoAdaptable(
     cultivo: Cultivo,
     nombreSector: String,
-    esDocente: Boolean,
-    onVerDetalle: () -> Unit,
-    onEditar: () -> Unit
+    onVerDetalle: () -> Unit
 ) {
     val estadoTexto = when (cultivo.estado) {
         EstadoCultivo.PLANIFICADO -> "Planificado"
@@ -151,27 +186,10 @@ private fun TarjetaCultivoAdaptable(
             }
         )
 
-        if (esDocente) {
-            DosColumnasAdaptables(
-                primero = {
-                    BotonSecundario(
-                        texto = "Ver detalle",
-                        onClick = onVerDetalle
-                    )
-                },
-                segundo = {
-                    BotonPrincipal(
-                        texto = "Editar cultivo",
-                        onClick = onEditar
-                    )
-                }
-            )
-        } else {
-            BotonSecundario(
-                texto = "Ver detalle",
-                onClick = onVerDetalle
-            )
-        }
+        BotonSecundario(
+            texto = "Ver detalle",
+            onClick = onVerDetalle
+        )
     }
 }
 

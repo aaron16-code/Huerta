@@ -6,20 +6,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.huertoescolar.domain.model.EstadoSector
-import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
 import cl.duoc.huertoescolar.domain.model.RolUsuario
 import cl.duoc.huertoescolar.domain.model.Sector
 import cl.duoc.huertoescolar.ui.components.BotonPrincipal
 import cl.duoc.huertoescolar.ui.components.BotonSecundario
-import cl.duoc.huertoescolar.ui.components.CuadriculaAdaptable
-import cl.duoc.huertoescolar.ui.components.DosColumnasAdaptables
 import cl.duoc.huertoescolar.ui.components.EtiquetaEstado
+import cl.duoc.huertoescolar.ui.components.CuadriculaAdaptable
 import cl.duoc.huertoescolar.ui.components.PantallaHuerto
 import cl.duoc.huertoescolar.ui.components.TarjetaHuerto
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 
 @Composable
 fun SectoresScreen(
@@ -30,8 +33,25 @@ fun SectoresScreen(
     onVolver: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val listaViewModel: ListaSectoresViewModel = viewModel()
+    val uiState by listaViewModel.uiState.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        listaViewModel.cargarSectores()
+    }
+
     val esDocente = rol == RolUsuario.ADMINISTRADOR
-    val sectores = RepositorioHuerto.sectores.toList()
+
+    val sectores = uiState.sectores.map { dto ->
+        Sector(
+            id = dto.id,
+            nombre = dto.nombre,
+            descripcion = dto.descripcion,
+            ubicacion = dto.ubicacion,
+            estado = EstadoSector.valueOf(dto.estado),
+            responsable = dto.responsableId?.let { "Usuario #$it" }
+                ?: "Sin responsable"
+        )
+    }
 
     PantallaHuerto(
         titulo = "Sectores del huerto",
@@ -46,40 +66,66 @@ fun SectoresScreen(
             )
         }
 
-        Text(
-            text = "Sectores registrados: ${sectores.size}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
+        when {
+            uiState.cargando -> {
+                Text("Cargando sectores...")
+            }
 
-        if (sectores.isEmpty()) {
-            TarjetaHuerto {
+            uiState.error != null -> {
                 Text(
-                    text = "Todavía no hay sectores",
-                    style = MaterialTheme.typography.titleMedium
+                    text = uiState.error.orEmpty(),
+                    color = MaterialTheme.colorScheme.error
                 )
 
-                Text(
-                    text = if (esDocente) {
-                        "Crea el primer sector para organizar las zonas del huerto."
-                    } else {
-                        "Aquí aparecerán las zonas que registre tu docente."
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                BotonSecundario(
+                    texto = "Reintentar",
+                    onClick = listaViewModel::cargarSectores
                 )
             }
-        } else {
-            CuadriculaAdaptable(
-                elementos = sectores,
-                anchoMinimo = 280.dp,
-                maxColumnas = 2
-            ) { sector ->
-                TarjetaSectorAdaptable(
-                    sector = sector,
-                    esDocente = esDocente,
-                    onVerDetalle = { onVerDetalle(sector) },
-                    onEditar = { onEditarSector(sector) }
+
+            else -> {
+                Text(
+                    text = "Sectores registrados: ${sectores.size}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
+
+                BotonSecundario(
+                    texto = "Actualizar lista",
+                    onClick = listaViewModel::cargarSectores
+                )
+
+                if (sectores.isEmpty()) {
+                    TarjetaHuerto {
+                        Text("Todavía no hay sectores registrados.")
+                    }
+                } else {
+                    CuadriculaAdaptable(
+                        elementos = sectores,
+                        anchoMinimo = 280.dp,
+                        maxColumnas = 2
+                    ) { sector ->
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            TarjetaSectorAdaptable(
+                                sector = sector,
+                                onVerDetalle = {
+                                    onVerDetalle(sector)
+                                }
+                            )
+
+                            if (esDocente) {
+                                BotonPrincipal(
+                                    texto = "Editar sector",
+                                    onClick = {
+                                        onEditarSector(sector)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -88,9 +134,7 @@ fun SectoresScreen(
 @Composable
 private fun TarjetaSectorAdaptable(
     sector: Sector,
-    esDocente: Boolean,
-    onVerDetalle: () -> Unit,
-    onEditar: () -> Unit
+    onVerDetalle: () -> Unit
 ) {
     val estadoTexto = when (sector.estado) {
         EstadoSector.DISPONIBLE -> "Disponible"
@@ -143,27 +187,10 @@ private fun TarjetaSectorAdaptable(
             valor = sector.responsable
         )
 
-        if (esDocente) {
-            DosColumnasAdaptables(
-                primero = {
-                    BotonSecundario(
-                        texto = "Ver detalle",
-                        onClick = onVerDetalle
-                    )
-                },
-                segundo = {
-                    BotonPrincipal(
-                        texto = "Editar sector",
-                        onClick = onEditar
-                    )
-                }
-            )
-        } else {
-            BotonSecundario(
-                texto = "Ver detalle",
-                onClick = onVerDetalle
-            )
-        }
+        BotonSecundario(
+            texto = "Ver detalle",
+            onClick = onVerDetalle
+        )
     }
 }
 
