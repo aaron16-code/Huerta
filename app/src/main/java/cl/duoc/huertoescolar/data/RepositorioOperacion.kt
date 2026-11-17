@@ -58,7 +58,8 @@ object RepositorioOperacion : TareasRepository {
                     _tareas.value = guardado.tareas.filterNot { it.descripcion == TAREA_RETIRADA }
                     tareasRetiradas.forEach { destino.eliminarTarea(it.id) }
                     _problemas.value = guardado.problemas
-                    _lecturas.value = guardado.lecturas
+                    // las lecturas son simuladas: si el destino no las guarda, se conservan las de ejemplo
+                    if (guardado.lecturas.isNotEmpty()) _lecturas.value = guardado.lecturas
                 }
             } catch (e: Throwable) {
                 persistencia = null // si Room falla, se sigue en memoria
@@ -104,7 +105,10 @@ object RepositorioOperacion : TareasRepository {
         val id = (_tareas.value.maxOfOrNull { it.id } ?: 0) + 1
         val creada = nueva.copy(id = id, fechaCreacion = System.currentTimeMillis(), estado = EstadoTarea.PENDIENTE)
         _tareas.update { it + creada }
-        guardar { it.insertarTarea(creada) }
+        guardar { destino ->
+            val guardada = destino.insertarTarea(creada)
+            if (guardada.id != creada.id) reemplazarTarea(creada.id, guardada)
+        }
         return Result.success(Unit)
     }
 
@@ -173,6 +177,15 @@ object RepositorioOperacion : TareasRepository {
         return Result.success(Unit)
     }
 
+    /** Cambia la tarea creada en memoria por la que devolvió el servidor (con su id real). */
+    private fun reemplazarTarea(idTemporal: Int, real: Tarea) {
+        _tareas.update { lista -> lista.map { if (it.id == idTemporal) real else it } }
+    }
+
+    private fun reemplazarProblema(idTemporal: Int, real: Problema) {
+        _problemas.update { lista -> lista.map { if (it.id == idTemporal) real else it } }
+    }
+
     private fun actualizarTarea(id: Int, cambio: (Tarea) -> Tarea) {
         _tareas.update { lista -> lista.map { if (it.id == id) cambio(it) else it } }
         obtenerTarea(id)?.let { t -> guardar { it.actualizarTarea(t) } }
@@ -185,7 +198,10 @@ object RepositorioOperacion : TareasRepository {
         val id = (_problemas.value.maxOfOrNull { it.id } ?: 0) + 1
         val nuevo = Problema(id, sectorId, cultivoId, tipo, descripcion, System.currentTimeMillis(), reportanteId, fotoUri)
         _problemas.update { it + nuevo }
-        guardar { it.insertarProblema(nuevo) }
+        guardar { destino ->
+            val guardado = destino.insertarProblema(nuevo)
+            if (guardado.id != nuevo.id) reemplazarProblema(nuevo.id, guardado)
+        }
         return Result.success(Unit)
     }
 

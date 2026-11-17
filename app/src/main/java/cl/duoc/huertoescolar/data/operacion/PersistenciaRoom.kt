@@ -27,8 +27,9 @@ class PersistenciaRoom(contexto: Context) : PersistenciaOperacion {
         datos.lecturas.forEach { dao.insertarLectura(it.aEntidad()) }
     }
 
-    override suspend fun insertarTarea(tarea: Tarea) {
+    override suspend fun insertarTarea(tarea: Tarea): Tarea {
         dao.insertarTarea(tarea.aEntidad())
+        return tarea
     }
 
     override suspend fun actualizarTarea(tarea: Tarea) {
@@ -39,8 +40,9 @@ class PersistenciaRoom(contexto: Context) : PersistenciaOperacion {
         dao.eliminarTarea(tareaId)
     }
 
-    override suspend fun insertarProblema(problema: Problema) {
+    override suspend fun insertarProblema(problema: Problema): Problema {
         dao.insertarProblema(problema.aEntidad())
+        return problema
     }
 
     override suspend fun actualizarProblema(problema: Problema) {

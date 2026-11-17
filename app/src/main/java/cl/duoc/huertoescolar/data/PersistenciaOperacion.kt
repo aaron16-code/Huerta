@@ -8,7 +8,7 @@ data class DatosOperacion(
 )
 
 /**
- * Lugar donde se guardan los datos del módulo de operación (hoy: Room).
+ * Lugar donde se guardan los datos del módulo de operación (Room o el microservicio por Retrofit).
  * El repositorio solo conoce esta interfaz. En las pruebas unitarias no hay persistencia
  * y todo sigue funcionando en memoria.
  */
@@ -19,9 +19,11 @@ interface PersistenciaOperacion {
     /** Guarda los datos de ejemplo la primera vez que se abre la app. */
     suspend fun guardarSemilla(datos: DatosOperacion)
 
-    suspend fun insertarTarea(tarea: Tarea)
+    /** Devuelve la tarea tal como quedó guardada (el servidor puede asignarle otro id). */
+    suspend fun insertarTarea(tarea: Tarea): Tarea
     suspend fun actualizarTarea(tarea: Tarea)
     suspend fun eliminarTarea(tareaId: Int)
-    suspend fun insertarProblema(problema: Problema)
+    /** Devuelve el problema tal como quedó guardado (el servidor puede asignarle otro id). */
+    suspend fun insertarProblema(problema: Problema): Problema
     suspend fun actualizarProblema(problema: Problema)
 }

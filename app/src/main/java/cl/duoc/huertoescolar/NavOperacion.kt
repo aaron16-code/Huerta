@@ -2,7 +2,6 @@ package cl.duoc.huertoescolar
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -10,7 +9,7 @@ import cl.duoc.huertoescolar.data.RepositorioOperacion
 import cl.duoc.huertoescolar.data.UsuarioPrueba
 import cl.duoc.huertoescolar.data.nombreDeCultivo
 import cl.duoc.huertoescolar.data.nombreDeSector
-import cl.duoc.huertoescolar.data.operacion.PersistenciaRoom
+import cl.duoc.huertoescolar.data.remoto.PersistenciaRetrofit
 import cl.duoc.huertoescolar.ui.screens.alertas.PanelAlertasScreen
 import cl.duoc.huertoescolar.ui.screens.historial.ListaHistorialScreen
 import cl.duoc.huertoescolar.ui.screens.problemas.ListaProblemasScreen
@@ -24,15 +23,14 @@ import cl.duoc.huertoescolar.ui.screens.tareas.ListaTareasScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.PanelValidacionScreen
 
 /**
- * Activa el guardado con Room la primera vez que se abre una pantalla de este módulo.
- * Si Room fallara, la app sigue funcionando en memoria.
+ * Conecta el módulo con el microservicio (Retrofit) la primera vez que se abre una pantalla.
+ * Si el servidor no responde, la app sigue funcionando en memoria.
  */
 @Composable
 private fun IniciarPersistencia() {
-    val contexto = LocalContext.current.applicationContext
     LaunchedEffect(Unit) {
         try {
-            RepositorioOperacion.iniciarPersistencia(PersistenciaRoom(contexto))
+            RepositorioOperacion.iniciarPersistencia(PersistenciaRetrofit())
         } catch (e: Throwable) {
             // se sigue en memoria
         }
