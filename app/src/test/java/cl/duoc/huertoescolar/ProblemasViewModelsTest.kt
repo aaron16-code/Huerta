@@ -8,9 +8,20 @@ import cl.duoc.huertoescolar.domain.model.TipoProblema
 import cl.duoc.huertoescolar.domain.repository.ProblemasRepository
 import cl.duoc.huertoescolar.ui.screens.problemas.ProblemasViewModel
 import cl.duoc.huertoescolar.ui.screens.problemas.ReportarProblemaViewModel
+import io.mockk.coEvery
+import io.mockk.coVerify
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.resetMain
+import org.junit.Before
+import org.junit.After
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -19,7 +30,21 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ProblemasViewModelsTest {
+
+    private val dispatcher = StandardTestDispatcher()
+
+    @Before
+    fun prepararCorrutinas() {
+        Dispatchers.setMain(dispatcher)
+    }
+
+    @After
+    fun limpiarCorrutinas() {
+        Dispatchers.resetMain()
+    }
+
 
     private val repository = mockk<ProblemasRepository> {
         every { problemas } returns MutableStateFlow<List<Problema>>(
@@ -102,8 +127,8 @@ class ProblemasViewModelsTest {
     }
 
     @Test
-    fun actualizarEnviaComentarioRecortadoYLimpiaSoloElReporteActual() {
-        every {
+    fun actualizarEnviaComentarioRecortadoYLimpiaSoloElReporteActual() = runTest {
+        coEvery {
             repository.actualizarProblema(
                 1,
                 RolUsuario.ADMINISTRADOR,
@@ -121,8 +146,9 @@ class ProblemasViewModelsTest {
             EstadoReporte.EN_REVISION,
             UsuariosPrueba.docente
         )
+        runCurrent()
 
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             repository.actualizarProblema(
                 1,
                 RolUsuario.ADMINISTRADOR,
@@ -141,8 +167,8 @@ class ProblemasViewModelsTest {
     }
 
     @Test
-    fun comentarioVacioConservaLaRespuestaDocenteAnterior() {
-        every {
+    fun comentarioVacioConservaLaRespuestaDocenteAnterior() = runTest {
+        coEvery {
             repository.actualizarProblema(
                 1,
                 RolUsuario.ADMINISTRADOR,
@@ -159,8 +185,9 @@ class ProblemasViewModelsTest {
             EstadoReporte.CERRADO,
             UsuariosPrueba.docente
         )
+        runCurrent()
 
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             repository.actualizarProblema(
                 1,
                 RolUsuario.ADMINISTRADOR,
@@ -173,8 +200,8 @@ class ProblemasViewModelsTest {
     }
 
     @Test
-    fun falloAlActualizarConservaComentarioYMuestraError() {
-        every {
+    fun falloAlActualizarConservaComentarioYMuestraError() = runTest {
+        coEvery {
             repository.actualizarProblema(
                 any(), any(), any(), any()
             )
@@ -190,6 +217,7 @@ class ProblemasViewModelsTest {
             EstadoReporte.CERRADO,
             UsuariosPrueba.docente
         )
+        runCurrent()
 
         assertEquals("Sin conexión", vm.mensaje)
         assertTrue(vm.mensajeEsError)
@@ -200,8 +228,8 @@ class ProblemasViewModelsTest {
     }
 
     @Test
-    fun falloSinMensajeUtilizaMensajeGenerico() {
-        every {
+    fun falloSinMensajeUtilizaMensajeGenerico() = runTest {
+        coEvery {
             repository.actualizarProblema(
                 any(), any(), any(), any()
             )
@@ -214,6 +242,7 @@ class ProblemasViewModelsTest {
             EstadoReporte.EN_REVISION,
             UsuariosPrueba.docente
         )
+        runCurrent()
 
         assertEquals(
             "No se pudo actualizar el reporte.",
@@ -291,14 +320,15 @@ class ProblemasViewModelsTest {
     }
 
     @Test
-    fun enviarSinSectorNoLlamaAlRepositorio() {
+    fun enviarSinSectorNoLlamaAlRepositorio() = runTest {
         val vm = ReportarProblemaViewModel(repository)
 
         vm.enviar(UsuariosPrueba.estudiante1)
+        runCurrent()
 
         assertFalse(vm.enviado)
 
-        verify(exactly = 0) {
+        coVerify(exactly = 0) {
             repository.reportarProblema(
                 any(), any(), any(), any(), any(), any()
             )
@@ -306,8 +336,8 @@ class ProblemasViewModelsTest {
     }
 
     @Test
-    fun envioExitosoTransmiteDatosYMarcaElFormularioEnviado() {
-        every {
+    fun envioExitosoTransmiteDatosYMarcaElFormularioEnviado() = runTest {
+        coEvery {
             repository.reportarProblema(
                 1,
                 7,
@@ -325,8 +355,9 @@ class ProblemasViewModelsTest {
         vm.pedirConfirmacion()
 
         vm.enviar(UsuariosPrueba.estudiante1)
+        runCurrent()
 
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             repository.reportarProblema(
                 1,
                 7,
@@ -344,8 +375,8 @@ class ProblemasViewModelsTest {
     }
 
     @Test
-    fun falloAlEnviarMantieneFormularioYNoMarcaEnviado() {
-        every {
+    fun falloAlEnviarMantieneFormularioYNoMarcaEnviado() = runTest {
+        coEvery {
             repository.reportarProblema(
                 any(), any(), any(), any(), any(), any()
             )
@@ -356,6 +387,7 @@ class ProblemasViewModelsTest {
         val vm = formularioPreparado()
 
         vm.enviar(UsuariosPrueba.estudiante1)
+        runCurrent()
 
         assertFalse(vm.enviado)
         assertTrue(vm.mensajeEsError)
@@ -364,8 +396,8 @@ class ProblemasViewModelsTest {
     }
 
     @Test
-    fun falloDeEnvioSinMensajeUtilizaTextoGenerico() {
-        every {
+    fun falloDeEnvioSinMensajeUtilizaTextoGenerico() = runTest {
+        coEvery {
             repository.reportarProblema(
                 any(), any(), any(), any(), any(), any()
             )
@@ -374,6 +406,7 @@ class ProblemasViewModelsTest {
         val vm = formularioPreparado()
 
         vm.enviar(UsuariosPrueba.estudiante1)
+        runCurrent()
 
         assertFalse(vm.enviado)
         assertTrue(vm.mensajeEsError)
@@ -381,5 +414,151 @@ class ProblemasViewModelsTest {
             "No se pudo enviar el reporte.",
             vm.mensaje
         )
+    }
+
+    @Test
+    fun esperaConfirmacionYEvitaEnviosDuplicados() = runTest {
+        val respuesta = CompletableDeferred<Result<Unit>>()
+        coEvery {
+            repository.reportarProblema(any(), any(), any(), any(), any(), any())
+        } coAnswers { respuesta.await() }
+        val vm = formularioPreparado()
+
+        vm.enviar(UsuariosPrueba.estudiante1)
+        vm.enviar(UsuariosPrueba.estudiante1)
+        runCurrent()
+
+        assertTrue(vm.enviando)
+        assertFalse(vm.enviado)
+        coVerify(exactly = 1) {
+            repository.reportarProblema(any(), any(), any(), any(), any(), any())
+        }
+
+        respuesta.complete(Result.success(Unit))
+        runCurrent()
+        assertFalse(vm.enviando)
+        assertTrue(vm.enviado)
+
+        vm.enviar(UsuariosPrueba.estudiante1)
+        runCurrent()
+        coVerify(exactly = 1) {
+            repository.reportarProblema(any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun falloConservaDatosYPermiteReintentar() = runTest {
+        coEvery {
+            repository.reportarProblema(any(), any(), any(), any(), any(), any())
+        } returnsMany listOf(
+            Result.failure(IllegalStateException("Sin conexión")),
+            Result.success(Unit)
+        )
+        val vm = formularioPreparado()
+        vm.elegirFoto("content://evidencia")
+        vm.elegirCultivo(7)
+
+        vm.enviar(UsuariosPrueba.estudiante1)
+        runCurrent()
+        assertFalse(vm.enviado)
+        assertFalse(vm.enviando)
+        assertTrue(vm.mensajeEsError)
+        assertEquals("  Suelo seco  ", vm.descripcion)
+        assertEquals("content://evidencia", vm.fotoUri)
+        assertEquals(1, vm.sectorId)
+        assertEquals(7, vm.cultivoId)
+
+        vm.enviar(UsuariosPrueba.estudiante1)
+        runCurrent()
+        assertTrue(vm.enviado)
+        assertFalse(vm.mensajeEsError)
+        assertNull(vm.mensaje)
+        coVerify(exactly = 2) {
+            repository.reportarProblema(any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun actualizarEsperaConfirmacionYEvitaDuplicadosDelMismoReporte() = runTest {
+        val respuesta = CompletableDeferred<Result<Unit>>()
+        coEvery {
+            repository.actualizarProblema(any(), any(), any(), any())
+        } coAnswers { respuesta.await() }
+        val vm = ProblemasViewModel(repository)
+        vm.cambiarComentario(1, "Revisar el riego")
+
+        vm.cambiarEstado(problema(), EstadoReporte.EN_REVISION, UsuariosPrueba.docente)
+        vm.cambiarEstado(problema(), EstadoReporte.CERRADO, UsuariosPrueba.docente)
+        runCurrent()
+
+        assertTrue(vm.estaActualizando(1))
+        assertNull(vm.mensaje)
+        assertEquals("Revisar el riego", vm.comentarioDe(1))
+        coVerify(exactly = 1) {
+            repository.actualizarProblema(1, RolUsuario.ADMINISTRADOR,
+                EstadoReporte.EN_REVISION, "Revisar el riego")
+        }
+        coVerify(exactly = 0) {
+            repository.actualizarProblema(1, any(), EstadoReporte.CERRADO, any())
+        }
+
+        respuesta.complete(Result.success(Unit))
+        runCurrent()
+        assertFalse(vm.estaActualizando(1))
+        assertEquals("", vm.comentarioDe(1))
+        assertEquals("Reporte actualizado: En revisión.", vm.mensaje)
+    }
+
+    @Test
+    fun actualizarFallidoPermiteReintentarConElComentarioConservado() = runTest {
+        coEvery {
+            repository.actualizarProblema(any(), any(), any(), any())
+        } returnsMany listOf(
+            Result.failure(IllegalStateException("Sin conexión")),
+            Result.success(Unit)
+        )
+        val vm = ProblemasViewModel(repository)
+        vm.cambiarComentario(1, "Riego solucionado")
+        vm.cambiarComentario(2, "Otro seguimiento")
+
+        vm.cambiarEstado(problema(), EstadoReporte.CERRADO, UsuariosPrueba.docente)
+        runCurrent()
+        assertTrue(vm.mensajeEsError)
+        assertFalse(vm.estaActualizando(1))
+        assertEquals("Riego solucionado", vm.comentarioDe(1))
+
+        vm.cambiarEstado(problema(), EstadoReporte.CERRADO, UsuariosPrueba.docente)
+        runCurrent()
+        assertFalse(vm.mensajeEsError)
+        assertEquals("Reporte actualizado: Cerrado.", vm.mensaje)
+        assertEquals("", vm.comentarioDe(1))
+        assertEquals("Otro seguimiento", vm.comentarioDe(2))
+        coVerify(exactly = 2) {
+            repository.actualizarProblema(1, RolUsuario.ADMINISTRADOR,
+                EstadoReporte.CERRADO, "Riego solucionado")
+        }
+    }
+
+    @Test
+    fun actualizarNoBorraTextoEscritoMientrasSeEsperaAlServidor() = runTest {
+        val respuesta = CompletableDeferred<Result<Unit>>()
+        coEvery {
+            repository.actualizarProblema(any(), any(), any(), any())
+        } coAnswers { respuesta.await() }
+        val vm = ProblemasViewModel(repository)
+        vm.cambiarComentario(1, "Comentario enviado")
+        vm.cambiarEstado(problema(), EstadoReporte.EN_REVISION, UsuariosPrueba.docente)
+        runCurrent()
+
+        vm.cambiarComentario(1, "Nuevo comentario todavía sin enviar")
+        respuesta.complete(Result.success(Unit))
+        runCurrent()
+
+        assertEquals("Nuevo comentario todavía sin enviar", vm.comentarioDe(1))
+        assertFalse(vm.estaActualizando(1))
+        coVerify(exactly = 1) {
+            repository.actualizarProblema(1, RolUsuario.ADMINISTRADOR,
+                EstadoReporte.EN_REVISION, "Comentario enviado")
+        }
     }
 }

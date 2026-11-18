@@ -3,6 +3,9 @@ package cl.duoc.huertoescolar.ui.screens.problemas
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import cl.duoc.huertoescolar.domain.model.RolUsuario
 import cl.duoc.huertoescolar.domain.model.EstadoReporte
@@ -23,6 +26,10 @@ class ProblemasViewModel(
 
     var uiState by mutableStateOf(ProblemasUiState())
         private set
+
+    private var actualizandoIds by mutableStateOf(emptySet<Int>())
+
+    fun estaActualizando(problemaId: Int): Boolean = problemaId in actualizandoIds
 
     val mensaje: String?
         get() = uiState.mensaje
@@ -58,29 +65,53 @@ class ProblemasViewModel(
         nuevo: EstadoReporte,
         usuario: UsuarioPrueba
     ) {
-        val nuevoComentario = comentarioDe(problema.id)
-            .trim()
+        if (estaActualizando(problema.id)) return
+
+        val comentarioEscrito = comentarioDe(problema.id)
+        val nuevoComentario = comentarioEscrito.trim()
             .ifEmpty { problema.comentarioDocente }
 
-        val resultado = repository.actualizarProblema(
-            id = problema.id,
-            rol = usuario.rol,
-            nuevoEstado = nuevo,
-            comentario = nuevoComentario
-        )
+        actualizandoIds = actualizandoIds + problema.id
+        uiState = uiState.copy(mensaje = null, mensajeEsError = false)
 
-        uiState = if (resultado.isSuccess) {
-            uiState.copy(
-                comentarios = uiState.comentarios - problema.id,
-                mensaje = "Reporte actualizado: ${nuevo.etiqueta}.",
-                mensajeEsError = false
-            )
-        } else {
-            uiState.copy(
-                mensaje = resultado.exceptionOrNull()?.message
-                    ?: "No se pudo actualizar el reporte.",
-                mensajeEsError = true
-            )
+        viewModelScope.launch {
+            try {
+                val resultado = repository.actualizarProblema(
+                    id = problema.id,
+                    rol = usuario.rol,
+                    nuevoEstado = nuevo,
+                    comentario = nuevoComentario
+                )
+
+                uiState = if (resultado.isSuccess) {
+                    // No borrar texto nuevo que el docente haya escrito mientras esperaba.
+                    val comentarios = if (comentarioDe(problema.id) == comentarioEscrito) {
+                        uiState.comentarios - problema.id
+                    } else {
+                        uiState.comentarios
+                    }
+                    uiState.copy(
+                        comentarios = comentarios,
+                        mensaje = "Reporte actualizado: ${nuevo.etiqueta}.",
+                        mensajeEsError = false
+                    )
+                } else {
+                    uiState.copy(
+                        mensaje = resultado.exceptionOrNull()?.message
+                            ?: "No se pudo actualizar el reporte.",
+                        mensajeEsError = true
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                uiState = uiState.copy(
+                    mensaje = e.message ?: "No se pudo actualizar el reporte.",
+                    mensajeEsError = true
+                )
+            } finally {
+                actualizandoIds = actualizandoIds - problema.id
+            }
         }
     }
 }

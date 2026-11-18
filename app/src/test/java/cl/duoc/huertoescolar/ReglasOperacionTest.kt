@@ -2,7 +2,8 @@ package cl.duoc.huertoescolar
 
 import cl.duoc.huertoescolar.domain.model.EstadoReporte
 import cl.duoc.huertoescolar.domain.model.EstadoTarea
-import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
+import cl.duoc.huertoescolar.data.repository.RepositorioOperacionImpl
+import kotlinx.coroutines.test.runTest
 import cl.duoc.huertoescolar.domain.model.Tarea
 import cl.duoc.huertoescolar.domain.model.TipoProblema
 import cl.duoc.huertoescolar.domain.model.TipoTarea
@@ -15,14 +16,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Reglas del caso sobre el repositorio en memoria.
- * El repositorio es único (object) y conserva su estado entre pruebas, por eso cada prueba
- * que modifica datos usa una tarea distinta (1, 2 y 5) y las demás solo comprueban rechazos.
- */
+/** Cada prueba utiliza su propia instancia del repositorio. */
 class ReglasOperacionTest {
 
-    private val repo = RepositorioOperacion
+    private val repo = RepositorioOperacionImpl()
     private val docente = UsuariosPrueba.docente
     private val estudiante = UsuariosPrueba.estudiante
     private val dia = 24L * 60 * 60 * 1000
@@ -162,13 +159,13 @@ class ReglasOperacionTest {
     // ---------- Problemas ----------
 
     @Test
-    fun reportar_un_problema_exige_descripcion() {
+    fun reportar_un_problema_exige_descripcion() = runTest {
         val r = repo.reportarProblema(1, 1, TipoProblema.FALTA_AGUA, "   ", estudiante.id, null)
         assertTrue(r.isFailure)
     }
 
     @Test
-    fun problema_reportado_queda_informado() {
+    fun problema_reportado_queda_informado() = runTest {
         val r = repo.reportarProblema(1, 1, TipoProblema.DANO_PLANTA, "Hojas amarillas", estudiante.id, null)
         assertTrue(r.isSuccess)
 
@@ -178,7 +175,7 @@ class ReglasOperacionTest {
     }
 
     @Test
-    fun solo_el_docente_da_seguimiento_a_los_problemas() {
+    fun solo_el_docente_da_seguimiento_a_los_problemas() = runTest {
         repo.reportarProblema(1, null, TipoProblema.OTRO, "Se rompió una manguera", estudiante.id, null)
         val id = repo.problemas.value.maxOf { it.id }
 
