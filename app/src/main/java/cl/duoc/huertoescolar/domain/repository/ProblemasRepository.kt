@@ -10,7 +10,7 @@ interface ProblemasRepository {
 
     val problemas: StateFlow<List<Problema>>
 
-    fun reportarProblema(
+    suspend fun reportarProblema(
         sectorId: Int,
         cultivoId: Int?,
         tipo: TipoProblema,
@@ -19,7 +19,7 @@ interface ProblemasRepository {
         fotoUri: String?
     ): Result<Unit>
 
-    fun actualizarProblema(
+    suspend fun actualizarProblema(
         id: Int,
         rol: RolUsuario,
         nuevoEstado: EstadoReporte,

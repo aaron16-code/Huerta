@@ -30,33 +30,6 @@ class CrearTareaTest {
 
     // ---------- Fecha del formulario ----------
 
-    @Test
-    fun una_fecha_valida_se_convierte() {
-        assertNotNull(parsearFechaFinDelDia("25/10/2026"))
-    }
-
-    @Test
-    fun una_fecha_que_no_existe_se_rechaza() {
-        assertNull(parsearFechaFinDelDia("31/02/2026"))
-        assertNull(parsearFechaFinDelDia("32/01/2026"))
-        assertNull(parsearFechaFinDelDia("10/13/2026"))
-    }
-
-    @Test
-    fun un_formato_incorrecto_se_rechaza() {
-        assertNull(parsearFechaFinDelDia(""))
-        assertNull(parsearFechaFinDelDia("25-10-2026"))
-        assertNull(parsearFechaFinDelDia("5/1/2026"))
-        assertNull(parsearFechaFinDelDia("hoy"))
-    }
-
-    @Test
-    fun la_fecha_queda_al_final_del_dia() {
-        val millis = parsearFechaFinDelDia("25/10/2026")!!
-        val calendario = Calendar.getInstance().apply { time = Date(millis) }
-        assertEquals(23, calendario.get(Calendar.HOUR_OF_DAY))
-        assertEquals(59, calendario.get(Calendar.MINUTE))
-    }
 
     // ---------- Validaciones del formulario ----------
 

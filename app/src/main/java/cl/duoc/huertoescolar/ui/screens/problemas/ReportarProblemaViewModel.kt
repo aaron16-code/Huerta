@@ -3,6 +3,9 @@ package cl.duoc.huertoescolar.ui.screens.problemas
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
 import cl.duoc.huertoescolar.domain.model.TipoProblema
@@ -14,6 +17,9 @@ class ReportarProblemaViewModel(
 ) : ViewModel() {
 
     var uiState by mutableStateOf(ReportarProblemaUiState())
+        private set
+
+    var enviando by mutableStateOf(false)
         private set
 
     val sectorId: Int?
@@ -101,29 +107,48 @@ class ReportarProblemaViewModel(
     }
 
     fun enviar(usuario: UsuarioPrueba) {
-        uiState = uiState.copy(mostrarConfirmacion = false)
+        if (enviando || enviado) return
 
-        val sector = uiState.sectorId ?: return
-
-        val resultado = repository.reportarProblema(
-            sectorId = sector,
-            cultivoId = uiState.cultivoId,
-            tipo = uiState.tipo,
-            descripcion = uiState.descripcion.trim(),
-            reportanteId = usuario.id,
-            fotoUri = uiState.fotoUri
+        val formulario = validarFormularioProblema(uiState).copy(
+            mostrarConfirmacion = false,
+            mensaje = null,
+            mensajeEsError = false
         )
+        uiState = formulario
+        if (formulario.errorSector != null || formulario.errorDescripcion != null) return
+        val sector = formulario.sectorId ?: return
 
-        if (resultado.isSuccess) {
-            uiState = uiState.copy(
-                enviado = true,
-                mensaje = null
-            )
-        } else {
-            mostrarError(
-                resultado.exceptionOrNull()?.message
-                    ?: "No se pudo enviar el reporte."
-            )
+        enviando = true
+        viewModelScope.launch {
+            try {
+                val resultado = repository.reportarProblema(
+                    sectorId = sector,
+                    cultivoId = formulario.cultivoId,
+                    tipo = formulario.tipo,
+                    descripcion = formulario.descripcion.trim(),
+                    reportanteId = usuario.id,
+                    fotoUri = formulario.fotoUri
+                )
+
+                if (resultado.isSuccess) {
+                    uiState = uiState.copy(
+                        enviado = true,
+                        mensaje = null,
+                        mensajeEsError = false
+                    )
+                } else {
+                    mostrarError(
+                        resultado.exceptionOrNull()?.message
+                            ?: "No se pudo enviar el reporte."
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                mostrarError(e.message ?: "No se pudo enviar el reporte.")
+            } finally {
+                enviando = false
+            }
         }
     }
 

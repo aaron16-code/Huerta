@@ -18,6 +18,10 @@ import cl.duoc.huertoescolar.domain.model.TipoProblema
 import cl.duoc.huertoescolar.domain.model.TipoTarea
 import cl.duoc.huertoescolar.domain.repository.ProblemasRepository
 import cl.duoc.huertoescolar.domain.repository.TareasRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,20 +30,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.plusAssign
 
 /**
  * Repositorio en memoria (Persona B): tareas, problemas y lecturas simuladas.
- * Todo es ficticio. Trabaja en memoria y, si se activa la persistencia (Room), guarda una copia
- * de cada cambio y la carga al abrir la app. Las pruebas unitarias corren sin persistencia.
+ * Trabaja en memoria y permite activar persistencia mediante Room o Retrofit. Guarda una copia
+ * de los cambios y la carga al abrir la app. Las pruebas pueden inyectar persistencia simulada.
  * IDs fijos acordados: usuario 1=docente, 2-4=estudiantes; sectores 1-3; cultivos 1-4.
  * Usa `RolUsuario` (ADMINISTRADOR, ESTUDIANTE) definido en Modelos.kt del proyecto.
  */
-object RepositorioOperacion : TareasRepository, ProblemasRepository {
+open class RepositorioOperacionImpl(
+    private val alcance: CoroutineScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
+) : TareasRepository, ProblemasRepository {
 
-    private const val TAREA_RETIRADA = "Revisar la tapa del invernadero"
-    private const val HORA = 60L * 60 * 1000
-    private const val DIA = 24 * HORA
+    private val TAREA_RETIRADA = "Revisar la tapa del invernadero"
+    private val HORA = 60L * 60 * 1000
+    private val DIA = 24 * HORA
     private fun enDias(n: Int) = System.currentTimeMillis() + n * DIA
     private fun fallo(msg: String) = Result.failure<Unit>(IllegalStateException(msg))
 
@@ -56,16 +62,21 @@ object RepositorioOperacion : TareasRepository, ProblemasRepository {
 
     @Volatile
     private var persistencia: PersistenciaOperacion? = null
-    private val alcance = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var cargaInicial: Job? = null
+    private var errorCargaInicial: Exception? = null
+    private val mutexReportes = Mutex()
+
 
     /**
      * Activa el guardado. Si ya hay datos guardados los carga; si no, guarda los de ejemplo.
-     * Si algo falla, la app sigue funcionando en memoria. Sin llamarla (pruebas) todo es en memoria.
+     * Si la carga falla se conserva la memoria, pero reportarProblema devuelve el error.
+     * Sin activar persistencia se permite trabajar en memoria, por ejemplo en pruebas.
      */
     fun iniciarPersistencia(destino: PersistenciaOperacion) {
         if (persistencia != null) return
         persistencia = destino
-        alcance.launch {
+        errorCargaInicial = null
+        cargaInicial = alcance.launch {
             try {
                 val guardado = destino.cargar()
                 if (guardado == null) {
@@ -84,8 +95,11 @@ object RepositorioOperacion : TareasRepository, ProblemasRepository {
                     // las lecturas son simuladas: si el destino no las guarda, se conservan las de ejemplo
                     if (guardado.lecturas.isNotEmpty()) _lecturas.value = guardado.lecturas
                 }
-            } catch (e: Throwable) {
-                persistencia = null // si Room falla, se sigue en memoria
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                errorCargaInicial = e
+                persistencia = null
             }
         }
     }
@@ -106,7 +120,7 @@ object RepositorioOperacion : TareasRepository, ProblemasRepository {
     override fun obtenerTarea(id: Int): Tarea? = _tareas.value.find { it.id == id }
 
     // Tarea elegida en la lista (mismo estilo que RepositorioHuerto.seleccionarSector)
-    override var tareaSeleccionadaId: Int? = null
+    final override var tareaSeleccionadaId: Int? = null
         private set
 
     override fun seleccionarTarea(id: Int) {
@@ -205,10 +219,6 @@ object RepositorioOperacion : TareasRepository, ProblemasRepository {
         _tareas.update { lista -> lista.map { if (it.id == idTemporal) real else it } }
     }
 
-    private fun reemplazarProblema(idTemporal: Int, real: Problema) {
-        _problemas.update { lista -> lista.map { if (it.id == idTemporal) real else it } }
-    }
-
     private fun actualizarTarea(id: Int, cambio: (Tarea) -> Tarea) {
         _tareas.update { lista -> lista.map { if (it.id == id) cambio(it) else it } }
         obtenerTarea(id)?.let { t -> guardar { it.actualizarTarea(t) } }
@@ -216,41 +226,104 @@ object RepositorioOperacion : TareasRepository, ProblemasRepository {
 
     // ---------- PROBLEMAS ----------
 
-    override fun reportarProblema(sectorId: Int, cultivoId: Int?, tipo: TipoProblema, descripcion: String, reportanteId: Int, fotoUri: String?): Result<Unit> {
+    override suspend fun reportarProblema(
+        sectorId: Int,
+        cultivoId: Int?,
+        tipo: TipoProblema,
+        descripcion: String,
+        reportanteId: Int,
+        fotoUri: String?
+    ): Result<Unit> {
         if (descripcion.isBlank()) return fallo("Describe brevemente el problema")
-        val id = (_problemas.value.maxOfOrNull { it.id } ?: 0) + 1
-        val nuevo = Problema(
-            id,
-            sectorId,
-            cultivoId,
-            tipo,
-            descripcion,
-            System.currentTimeMillis(),
-            reportanteId,
-            fotoUri
-        )
-        _problemas.update { it + nuevo }
-        guardar { destino ->
-            val guardado = destino.insertarProblema(nuevo)
-            if (guardado.id != nuevo.id) reemplazarProblema(nuevo.id, guardado)
-        }
-        return Result.success(Unit)
-    }
 
-    override fun actualizarProblema(id: Int, rol: RolUsuario, nuevoEstado: EstadoReporte, comentario: String): Result<Unit> {
-        if (rol != RolUsuario.ADMINISTRADOR) return fallo("Solo docentes o talleristas pueden dar seguimiento")
-        _problemas.update { lista ->
-            lista.map {
-                if (it.id != id) it else it.copy(
-                    estado = nuevoEstado,
-                    comentarioDocente = comentario,
-                    fechaCierre = if (nuevoEstado == EstadoReporte.ATENDIDO || nuevoEstado == EstadoReporte.CERRADO)
-                        (it.fechaCierre ?: System.currentTimeMillis()) else null
+        return mutexReportes.withLock {
+            try {
+                // Espera la carga para evitar que sobrescriba un reporte recién creado.
+                cargaInicial?.let { carga ->
+                    carga.join()
+                    if (carga.isCancelled) {
+                        throw CancellationException("La carga inicial fue cancelada")
+                    }
+                }
+                errorCargaInicial?.let { return@withLock Result.failure<Unit>(it) }
+
+                val destino = persistencia
+                val nuevo = Problema(
+                    id = if (destino == null) {
+                        (_problemas.value.maxOfOrNull { it.id } ?: 0) + 1
+                    } else {
+                        0 // La persistencia devuelve el identificador definitivo.
+                    },
+                    sectorId = sectorId,
+                    cultivoId = cultivoId,
+                    tipo = tipo,
+                    descripcion = descripcion.trim(),
+                    fechaReporte = System.currentTimeMillis(),
+                    reportadoPorId = reportanteId,
+                    fotoUri = fotoUri
                 )
+                val guardado = destino?.insertarProblema(nuevo) ?: nuevo
+
+                // Publica solamente después de confirmar el guardado.
+                _problemas.update { lista ->
+                    lista.filterNot { it.id == guardado.id } + guardado
+                }
+                Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
             }
         }
-        _problemas.value.find { it.id == id }?.let { p -> guardar { it.actualizarProblema(p) } }
-        return Result.success(Unit)
+    }
+
+    override suspend fun actualizarProblema(
+        id: Int,
+        rol: RolUsuario,
+        nuevoEstado: EstadoReporte,
+        comentario: String
+    ): Result<Unit> {
+        if (rol != RolUsuario.ADMINISTRADOR) {
+            return fallo("Solo docentes o talleristas pueden dar seguimiento")
+        }
+
+        return mutexReportes.withLock {
+            try {
+                cargaInicial?.let { carga ->
+                    carga.join()
+                    if (carga.isCancelled) {
+                        throw CancellationException("La carga inicial fue cancelada")
+                    }
+                }
+                errorCargaInicial?.let { return@withLock Result.failure<Unit>(it) }
+
+                val original = _problemas.value.find { it.id == id }
+                    ?: return@withLock fallo("El reporte no existe")
+                val actualizado = original.copy(
+                    estado = nuevoEstado,
+                    comentarioDocente = comentario.trim(),
+                    fechaCierre = if (
+                        nuevoEstado == EstadoReporte.ATENDIDO ||
+                        nuevoEstado == EstadoReporte.CERRADO
+                    ) {
+                        original.fechaCierre ?: System.currentTimeMillis()
+                    } else {
+                        null
+                    }
+                )
+
+                // Si falla, no se modifica la copia que muestra la aplicación.
+                persistencia?.actualizarProblema(actualizado)
+                _problemas.update { lista ->
+                    lista.map { if (it.id == id) actualizado else it }
+                }
+                Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
     }
 
     // ---------- ALERTAS (solo informativas) ----------
@@ -329,4 +402,7 @@ object RepositorioOperacion : TareasRepository, ProblemasRepository {
 
         return eventos.sortedByDescending { it.fecha }
     }
+
 }
+
+object RepositorioOperacion : RepositorioOperacionImpl()
