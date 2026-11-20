@@ -7,6 +7,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import cl.duoc.huertoescolar.ui.components.EliminarRegistro
+import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -102,6 +104,7 @@ fun ListaProblemasScreen(
                 anchoMinimo = 340.dp,
                 maxColumnas = 2
             ) { problema ->
+Column {
                 TarjetaProblema(
                     problema = problema,
                     sector = nombreSector(problema.sectorId),
@@ -115,6 +118,8 @@ fun ListaProblemasScreen(
                         viewModel.cambiarEstado(problema, nuevo, usuario)
                     }
                 )
+if (esAdmin) EliminarRegistro("problema") { RepositorioOperacion.eliminarProblema(problema.id, usuario.rol) }
+}
             }
         }
     }

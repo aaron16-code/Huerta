@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import cl.duoc.huertoescolar.data.repository.confirmarOperacion
 import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
 import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
 import cl.duoc.huertoescolar.domain.repository.CatalogoHuertoRepository
@@ -83,7 +84,7 @@ class CrearTareaViewModel(
         val destino = state.destinatario ?: return
 
         uiState = state.copy(mostrarConfirmacion = false)
-        val resultado = repository.crearTarea(
+        confirmarOperacion(repository, accion = { repository.crearTarea(
             rol = usuario.rol,
             nueva = Tarea(
                 id = 0,
@@ -98,13 +99,14 @@ class CrearTareaViewModel(
                 grupoAsignado = destino.grupo,
                 creadaPorId = usuario.id
             )
-        )
+        ) }) { resultado ->
         uiState = if (resultado.isSuccess) {
             uiState.copy(guardada = true, mensajeError = null)
         } else {
             uiState.copy(
                 mensajeError = resultado.exceptionOrNull()?.message ?: "No se pudo crear la tarea."
             )
+        }
         }
     }
 
@@ -120,7 +122,7 @@ class CrearTareaViewModel(
 internal fun destinatariosDisponibles(): List<DestinatarioTareaUi> =
     UsuariosPrueba.estudiantes.map { estudiante ->
         DestinatarioTareaUi(estudiante.nombre, estudiante.id, null)
-    } + DestinatarioTareaUi("Grupo Taller Huerto A", null, "Taller Huerto A")
+    } + UsuariosPrueba.estudiantes.map { it.grupo }.filter { it.isNotBlank() }.distinct().map { DestinatarioTareaUi("Grupo $it", null, it) }
 
 internal fun TareaFormUiState.conErrores(errores: ErroresFormularioTarea): TareaFormUiState =
     copy(

@@ -72,7 +72,7 @@ class SectorViewModel(
             descripcion = uiState.descripcion.trim(),
             ubicacion = uiState.ubicacion.trim(),
             estado = EstadoSector.DISPONIBLE.name,
-            responsableId = 1
+            responsableId = cl.duoc.huertoescolar.data.UsuariosPrueba.todos.firstOrNull { it.rol == cl.duoc.huertoescolar.domain.model.RolUsuario.ADMINISTRADOR }?.id
         )
 
         guardando = true

@@ -23,21 +23,6 @@ import cl.duoc.huertoescolar.ui.screens.tareas.GestionTareasScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.ListaTareasScreen
 import cl.duoc.huertoescolar.ui.screens.tareas.PanelValidacionScreen
 
-/**
- * Conecta el módulo con el microservicio (Retrofit) la primera vez que se abre una pantalla.
- * Si el servidor no responde, la app sigue funcionando en memoria.
- */
-@Composable
-private fun IniciarPersistencia() {
-    LaunchedEffect(Unit) {
-        try {
-            RepositorioOperacion.iniciarPersistencia(PersistenciaRetrofit())
-        } catch (e: Throwable) {
-            // se sigue en memoria
-        }
-    }
-}
-
 /** Rutas propias del módulo de operación (Rutas.kt es del otro integrante). */
 object RutasOperacion {
     const val DETALLE_TAREA = "detalle_tarea"
@@ -60,7 +45,6 @@ fun NavGraphBuilder.grafoOperacion(
 ) {
     // Tareas: el docente gestiona todas (y crea nuevas); el estudiante ve las suyas
     composable(Rutas.TAREAS) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             if (usuario.rol == RolUsuario.ADMINISTRADOR) {
                 GestionTareasScreen(
@@ -93,7 +77,6 @@ fun NavGraphBuilder.grafoOperacion(
 
     // Docente: formulario para crear y asignar una tarea
     composable(RutasOperacion.CREAR_TAREA) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             CrearTareaScreen(
                 usuario = usuario,
@@ -104,7 +87,6 @@ fun NavGraphBuilder.grafoOperacion(
 
     // Docente: editar y reasignar una tarea existente
     composable(RutasOperacion.EDITAR_TAREA) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             EditarTareaScreen(
                 usuario = usuario,
@@ -115,7 +97,6 @@ fun NavGraphBuilder.grafoOperacion(
 
     // Estudiante: detalle de una tarea
     composable(RutasOperacion.DETALLE_TAREA) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             DetalleTareaScreen(
                 usuario = usuario,
@@ -127,7 +108,6 @@ fun NavGraphBuilder.grafoOperacion(
 
     // Administrador: validar tareas
     composable(Rutas.VALIDAR_TAREAS) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             PanelValidacionScreen(
                 usuario = usuario,
@@ -139,7 +119,6 @@ fun NavGraphBuilder.grafoOperacion(
 
     // Problemas: lista (estudiante ve los suyos, docente ve todos)
     composable(Rutas.PROBLEMAS) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             ListaProblemasScreen(
                 usuario = usuario,
@@ -153,7 +132,6 @@ fun NavGraphBuilder.grafoOperacion(
 
     // Problemas: formulario del estudiante
     composable(RutasOperacion.REPORTAR_PROBLEMA) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             ReportarProblemaScreen(
                 usuario = usuario,
@@ -164,7 +142,6 @@ fun NavGraphBuilder.grafoOperacion(
 
     // Alertas y recordatorios (informativos)
     composable(Rutas.ALERTAS) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             PanelAlertasScreen(
                 usuario = usuario,
@@ -176,7 +153,6 @@ fun NavGraphBuilder.grafoOperacion(
 
     // Sensores simulados (solo docente; siempre como dato de prueba)
     composable(Rutas.SENSORES) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             PanelSensoresScreen(
                 usuario = usuario,
@@ -188,7 +164,6 @@ fun NavGraphBuilder.grafoOperacion(
 
     // Historial cronológico (docente ve todo; estudiante, solo lo suyo)
     composable(Rutas.HISTORIAL) {
-        IniciarPersistencia()
         usuarioActual()?.let { usuario ->
             ListaHistorialScreen(
                 usuario = usuario,

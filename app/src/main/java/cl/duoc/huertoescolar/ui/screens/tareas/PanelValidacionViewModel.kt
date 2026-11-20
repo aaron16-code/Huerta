@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import cl.duoc.huertoescolar.data.repository.confirmarOperacion
 import cl.duoc.huertoescolar.domain.model.EstadoTarea
 import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
 import cl.duoc.huertoescolar.domain.model.Tarea
@@ -47,13 +48,13 @@ class PanelValidacionViewModel(
         aprobada: Boolean,
         usuario: UsuarioPrueba
     ) {
-        val resultado = repository.validarTarea(
+        confirmarOperacion(repository, accion = { repository.validarTarea(
             tareaId = tarea.id,
             validadorId = usuario.id,
             rol = usuario.rol,
             aprobada = aprobada,
             comentario = comentarioDe(tarea.id).trim()
-        )
+        ) }) { resultado ->
 
         uiState = if (resultado.isSuccess) {
             uiState.copy(
@@ -71,6 +72,7 @@ class PanelValidacionViewModel(
                     ?: "No se pudo completar la acción.",
                 mensajeEsError = true
             )
+        }
         }
     }
 }

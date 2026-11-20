@@ -149,7 +149,7 @@ abstract class OperacionDatabase : RoomDatabase() {
                 Room.databaseBuilder(
                     context.applicationContext,
                     OperacionDatabase::class.java,
-                    "huerto_escolar_unificado.db"
+                    "huerto_escolar_servidor.db"
                 )
                     .build()
                     .also { INSTANCE = it }

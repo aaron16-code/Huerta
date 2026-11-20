@@ -13,11 +13,11 @@ class HuertoRemoteRepository(
 ) {
 
     suspend fun obtenerSectores(): List<SectorDto> {
-        return api.obtenerSectores()
+        return api.obtenerSectores().map { it.seguro() }
     }
 
     suspend fun crearSector(sector: SectorRequest): SectorDto {
-        return api.crearSector(sector)
+        return api.crearSector(sector).seguro().also { RepositorioHuerto.recibirSector(it) }
     }
 
     suspend fun actualizarSector(
@@ -29,9 +29,7 @@ class HuertoRemoteRepository(
     ): SectorDto {
         val sectorActual = api.obtenerSector(id)
 
-        val responsableId = requireNotNull(sectorActual.responsableId) {
-            "El sector no tiene un responsable asignado."
-        }
+        val responsableId = sectorActual.responsableId
 
         val solicitud = SectorRequest(
             nombre = nombre,
@@ -44,28 +42,32 @@ class HuertoRemoteRepository(
         return api.actualizarSector(
             id = id,
             sector = solicitud
-        )
+        ).seguro().also { RepositorioHuerto.recibirSector(it) }
     }
 
     suspend fun obtenerCultivos(): List<CultivoDto> {
-        return api.obtenerCultivos()
+        return api.obtenerCultivos().map { it.seguro() }
     }
 
     suspend fun crearCultivo(cultivo: CultivoRequest): CultivoDto {
-        return api.crearCultivo(cultivo)
+        return api.crearCultivo(cultivo).seguro().also { RepositorioHuerto.recibirCultivo(it) }
     }
 
     suspend fun actualizarCultivo(
         id: Int,
         cultivo: CultivoRequest
     ): CultivoDto {
-        return api.actualizarCultivo(id, cultivo)
+        return api.actualizarCultivo(id, cultivo).seguro().also { RepositorioHuerto.recibirCultivo(it) }
     }
 
     suspend fun obtenerSector(id: Int): SectorDto {
-        return api.obtenerSector(id)
+        return api.obtenerSector(id).seguro()
     }
 
 
 
+    suspend fun eliminarSector(id: Int) { api.eliminarSector(id); RepositorioHuerto.quitarSector(id) }
+    suspend fun eliminarCultivo(id: Int) { api.eliminarCultivo(id); RepositorioHuerto.quitarCultivo(id) }
 }
+private fun SectorDto.seguro() = copy(descripcion = descripcion.orEmpty(), ubicacion = ubicacion.orEmpty())
+private fun CultivoDto.seguro() = copy(descripcion = descripcion.orEmpty(), fechaSiembra = fechaSiembra.orEmpty(), fechaCosechaEstimada = fechaCosechaEstimada.orEmpty(), observaciones = observaciones.orEmpty())

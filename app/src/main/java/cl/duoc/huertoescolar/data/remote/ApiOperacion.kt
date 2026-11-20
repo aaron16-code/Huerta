@@ -11,6 +11,9 @@ import retrofit2.http.Path
 
 /** Endpoints del microservicio para tareas y problemas. */
 interface ApiOperacion {
+    @DELETE("api/problemas/{id}")
+    suspend fun eliminarProblema(@Path("id") id: Int)
+
 
     @GET("api/tareas")
     suspend fun listarTareas(): List<TareaRemota>

@@ -1,5 +1,7 @@
 package cl.duoc.huertoescolar.data.remote
 
+import retrofit2.http.DELETE
+import cl.duoc.huertoescolar.data.UsuarioPrueba
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -7,6 +9,13 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface HuertoApi {
+    @GET("api/usuarios")
+    suspend fun obtenerUsuarios(): List<UsuarioRemoto>
+    @DELETE("api/sectores/{id}")
+    suspend fun eliminarSector(@Path("id") id: Int)
+    @DELETE("api/cultivos/{id}")
+    suspend fun eliminarCultivo(@Path("id") id: Int)
+
     @PUT("api/cultivos/{id}")
     suspend fun actualizarCultivo(
         @Path("id") id: Int,

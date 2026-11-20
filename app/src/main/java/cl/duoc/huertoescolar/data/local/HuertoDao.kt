@@ -9,6 +9,19 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface HuertoDao {
+    @androidx.room3.Transaction
+    suspend fun reemplazarCatalogo(sectores: List<SectorEntity>, cultivos: List<CultivoEntity>) {
+        limpiarCultivos()
+        limpiarSectores()
+        sectores.forEach { insertarSector(it) }
+        cultivos.forEach { insertarCultivo(it) }
+    }
+
+    @Query("DELETE FROM cultivos")
+    suspend fun limpiarCultivos()
+    @Query("DELETE FROM sectores")
+    suspend fun limpiarSectores()
+
     @Insert
     suspend fun insertarUsuario(usuario: UsuarioEntity): Long
 

@@ -18,17 +18,21 @@ import cl.duoc.huertoescolar.ui.screens.perfil.PerfilScreen
 fun Navegacion(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
-    var usuarioId by rememberSaveable {
+    var usuarioId by androidx.compose.runtime.remember {
         mutableStateOf<Int?>(null)
     }
 
-    val usuarios = listOf(UsuariosPrueba.docente) +
-            UsuariosPrueba.estudiantes
+    val usuarios = UsuariosPrueba.todos
 
     val usuarioSeleccionado = usuarios.firstOrNull {
         it.id == usuarioId
     }
 
+    androidx.compose.runtime.LaunchedEffect(usuarioSeleccionado, usuarioId) {
+        if (usuarioSeleccionado == null && navController.currentDestination != null && navController.currentDestination?.route != Rutas.LOGIN) {
+            navController.navigate(Rutas.LOGIN) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
+        }
+    }
     NavHost(
         navController = navController,
         startDestination = Rutas.LOGIN,

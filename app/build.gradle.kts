@@ -18,6 +18,9 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        val apiUrl = providers.gradleProperty("HUERTO_API_URL").orElse("http://10.0.2.2:8080/").get()
+        require(apiUrl.endsWith("/")) { "HUERTO_API_URL debe terminar en /" }
+        buildConfigField("String", "HUERTO_API_URL", "\"$apiUrl\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -34,6 +37,27 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*ComposableSingletons*",
+                    "*ScreenKt*",
+                    "cl.duoc.huertoescolar.navigation.*",
+                    "cl.duoc.huertoescolar.ui.theme.*",
+                    "cl.duoc.huertoescolar.ui.components.*",
+                    "cl.duoc.huertoescolar.MainActivity*",
+                    "*_Impl*",
+                    "*.BuildConfig"
+                )
+                annotatedBy("androidx.compose.runtime.Composable")
+            }
+        }
     }
 }
 

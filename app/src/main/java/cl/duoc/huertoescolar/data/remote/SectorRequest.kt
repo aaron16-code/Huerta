@@ -5,5 +5,5 @@ data class SectorRequest(
     val descripcion: String,
     val ubicacion: String,
     val estado: String,
-    val responsableId: Int
+    val responsableId: Int?
 )

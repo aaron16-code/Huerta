@@ -58,4 +58,17 @@ class ListaSectoresViewModel(
             }
         }
     }
+    fun eliminar(id: Int) {
+        if (_uiState.value.cargando) return
+        _uiState.value = _uiState.value.copy(cargando = true, error = null)
+        viewModelScope.launch {
+            try {
+                repository.eliminarSector(id)
+                _uiState.value = _uiState.value.copy(cargando = false, sectores = _uiState.value.sectores.filterNot { it.id == id })
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(cargando = false, error = "No se pudo eliminar. Comprueba si tiene registros asociados y actualiza la lista.")
+            }
+        }
+    }
 }

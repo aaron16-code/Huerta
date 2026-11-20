@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import cl.duoc.huertoescolar.data.repository.confirmarOperacion
 import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
 import cl.duoc.huertoescolar.data.repository.RepositorioHuerto
 import cl.duoc.huertoescolar.domain.repository.CatalogoHuertoRepository
@@ -73,7 +74,7 @@ class EditarTareaViewModel(
         val sector = state.sectorId ?: return
         val fecha = parsearFechaFinDelDia(state.fechaTexto) ?: return
         val destino = state.destinatario ?: return
-        val resultado = repository.editarTarea(
+        confirmarOperacion(repository, accion = { repository.editarTarea(
             rol = usuario.rol,
             editada = original.copy(
                 tipo = state.tipo,
@@ -85,13 +86,14 @@ class EditarTareaViewModel(
                 responsableUsuarioId = destino.usuarioId,
                 grupoAsignado = destino.grupo
             )
-        )
+        ) }) { resultado ->
         uiState = if (resultado.isSuccess) {
             uiState.copy(guardada = true, mensajeError = null)
         } else {
             uiState.copy(
                 mensajeError = resultado.exceptionOrNull()?.message ?: "No se pudo actualizar la tarea."
             )
+        }
         }
     }
 

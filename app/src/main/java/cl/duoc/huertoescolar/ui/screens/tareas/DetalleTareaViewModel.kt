@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import cl.duoc.huertoescolar.data.repository.confirmarOperacion
 import cl.duoc.huertoescolar.domain.model.RolUsuario
 import cl.duoc.huertoescolar.domain.model.EstadoTarea
 import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
@@ -85,13 +86,13 @@ class DetalleTareaViewModel(
 
         val id = tareaId ?: return
 
-        val resultado = repository.marcarRealizada(
+        confirmarOperacion(repository, accion = { repository.marcarRealizada(
             tareaId = id,
             usuarioId = usuario.id,
             grupo = usuario.grupo,
             comentario = uiState.comentario.trim(),
             fotoUri = uiState.fotoUri
-        )
+        ) }) { resultado ->
 
         uiState = if (resultado.isSuccess) {
             uiState.copy(
@@ -105,6 +106,7 @@ class DetalleTareaViewModel(
                     ?: "No se pudo enviar la tarea.",
                 mensajeEsError = true
             )
+        }
         }
     }
 }
