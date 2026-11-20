@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +36,10 @@ fun CultivosScreen(
 ) {
     val listaViewModel: ListaCultivosViewModel = viewModel()
     val uiState by listaViewModel.uiState.collectAsStateWithLifecycle()
+    var eliminarId by remember { mutableStateOf<Int?>(null) }
+    eliminarId?.let { id ->
+        AlertDialog(onDismissRequest = { eliminarId = null }, title = { Text("Eliminar cultivo") }, text = { Text("Esta acción elimina el registro del servidor. ¿Continuar?") }, confirmButton = { TextButton(onClick = { eliminarId = null; listaViewModel.eliminar(id) }) { Text("Eliminar") } }, dismissButton = { TextButton(onClick = { eliminarId = null }) { Text("Cancelar") } })
+    }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         listaViewModel.cargarCultivos()
     }
@@ -116,6 +122,7 @@ fun CultivosScreen(
                                         onEditarCultivo(cultivo)
                                     }
                                 )
+                                BotonSecundario(texto = "Eliminar cultivo", onClick = { eliminarId = cultivo.id })
                             }
                         }
                     }

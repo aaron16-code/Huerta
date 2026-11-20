@@ -11,6 +11,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import cl.duoc.huertoescolar.ui.components.EliminarRegistro
+import cl.duoc.huertoescolar.data.repository.RepositorioOperacion
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -135,6 +137,7 @@ fun GestionTareasScreen(
                     anchoMinimo = 300.dp,
                     maxColumnas = 2
                 ) { tarea ->
+Column {
                     TarjetaTareaDocente(
                         tarea = tarea,
                         sector = nombreSector(tarea.sectorId),
@@ -145,6 +148,8 @@ fun GestionTareasScreen(
                             onVerDetalle(tarea.id)
                         }
                     )
+EliminarRegistro("tarea") { RepositorioOperacion.eliminarTarea(tarea.id, usuario.rol) }
+}
                 }
             }
         }

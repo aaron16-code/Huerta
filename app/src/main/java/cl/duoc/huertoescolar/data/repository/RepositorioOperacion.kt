@@ -18,10 +18,6 @@ import cl.duoc.huertoescolar.domain.model.TipoProblema
 import cl.duoc.huertoescolar.domain.model.TipoTarea
 import cl.duoc.huertoescolar.domain.repository.ProblemasRepository
 import cl.duoc.huertoescolar.domain.repository.TareasRepository
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,17 +26,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 
 /**
  * Repositorio en memoria (Persona B): tareas, problemas y lecturas simuladas.
- * Trabaja en memoria y permite activar persistencia mediante Room o Retrofit. Guarda una copia
- * de los cambios y la carga al abrir la app. Las pruebas pueden inyectar persistencia simulada.
+ * Todo es ficticio. Trabaja en memoria y, si se activa la persistencia (Room), guarda una copia
+ * de cada cambio y la carga al abrir la app. Las pruebas unitarias corren sin persistencia.
  * IDs fijos acordados: usuario 1=docente, 2-4=estudiantes; sectores 1-3; cultivos 1-4.
  * Usa `RolUsuario` (ADMINISTRADOR, ESTUDIANTE) definido en Modelos.kt del proyecto.
  */
 open class RepositorioOperacionImpl(
-    private val alcance: CoroutineScope =
-        CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val alcance: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) : TareasRepository, ProblemasRepository {
 
     private val TAREA_RETIRADA = "Revisar la tapa del invernadero"
@@ -64,7 +63,7 @@ open class RepositorioOperacionImpl(
     private var persistencia: PersistenciaOperacion? = null
     private var cargaInicial: Job? = null
     private var errorCargaInicial: Exception? = null
-    private val mutexReportes = Mutex()
+    private val mutex = Mutex()
 
 
     /**
@@ -88,9 +87,7 @@ open class RepositorioOperacionImpl(
                         )
                     )
                 } else {
-                    val tareasRetiradas = guardado.tareas.filter { it.descripcion == TAREA_RETIRADA }
                     _tareas.value = guardado.tareas.filterNot { it.descripcion == TAREA_RETIRADA }
-                    tareasRetiradas.forEach { destino.eliminarTarea(it.id) }
                     _problemas.value = guardado.problemas
                     // las lecturas son simuladas: si el destino no las guarda, se conservan las de ejemplo
                     if (guardado.lecturas.isNotEmpty()) _lecturas.value = guardado.lecturas
@@ -104,12 +101,60 @@ open class RepositorioOperacionImpl(
         }
     }
 
+    private var confirmando = false
+    private var pendiente: (suspend (PersistenciaOperacion) -> Unit)? = null
+
+    suspend fun conectar(destino: PersistenciaOperacion) = mutex.withLock {
+        cargaInicial?.join()
+        val datos = requireNotNull(destino.cargar())
+        cargaInicial = null
+        errorCargaInicial = null
+        _tareas.value = datos.tareas
+        _problemas.value = datos.problemas
+        persistencia = destino
+    }
+
+    suspend fun confirmar(accion: () -> Result<Unit>): Result<Unit> {
+        if (!mutex.tryLock()) return fallo("Hay un cambio en curso. Espera un momento.")
+        try {
+        return confirmarBloqueado(accion)
+        } finally { mutex.unlock() }
+    }
+
+    private suspend fun confirmarBloqueado(accion: () -> Result<Unit>): Result<Unit> {
+        cargaInicial?.join()
+        errorCargaInicial?.let { return Result.failure(it) }
+        val destino = persistencia ?: return fallo("Servidor no conectado")
+        val anterioresTareas = _tareas.value
+        val anterioresProblemas = _problemas.value
+        confirmando = true
+        pendiente = null
+        return try {
+            val resultado = accion()
+            if (resultado.isFailure) return resultado
+            pendiente?.invoke(destino)
+            resultado
+        } catch (e: CancellationException) {
+            _tareas.value = anterioresTareas; _problemas.value = anterioresProblemas
+            throw e
+        } catch (e: Exception) {
+            _tareas.value = anterioresTareas; _problemas.value = anterioresProblemas
+            fallo("El servidor no confirmó el cambio. Revisa la conexión antes de reintentar.")
+        } finally {
+            confirmando = false; pendiente = null
+        }
+    }
+
     private fun guardar(bloque: suspend (PersistenciaOperacion) -> Unit) {
+        if (confirmando) { pendiente = bloque; return }
+
         val destino = persistencia ?: return
         alcance.launch {
             try {
                 bloque(destino)
-            } catch (e: Throwable) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
                 // si no se pudo guardar, el dato sigue en memoria
             }
         }
@@ -131,7 +176,7 @@ open class RepositorioOperacionImpl(
     fun tareasDe(usuarioId: Int, grupo: String): List<Tarea> =
         _tareas.value.filter {
             it.responsableUsuarioId == usuarioId ||
-                    (it.responsableUsuarioId == null && it.grupoAsignado == grupo)
+                    (it.responsableUsuarioId == null && grupo.isNotBlank() && it.grupoAsignado == grupo)
         }
 
     override fun crearTarea(rol: RolUsuario, nueva: Tarea): Result<Unit> {
@@ -139,12 +184,13 @@ open class RepositorioOperacionImpl(
         if (nueva.descripcion.isBlank()) return fallo("La descripción es obligatoria")
         if (nueva.responsableUsuarioId == null && nueva.grupoAsignado.isNullOrBlank())
             return fallo("Asigna la tarea a un estudiante o a un grupo")
+        if (nueva.instrucciones.isBlank()) return fallo("Las instrucciones son obligatorias")
         val id = (_tareas.value.maxOfOrNull { it.id } ?: 0) + 1
         val creada = nueva.copy(id = id, fechaCreacion = System.currentTimeMillis(), estado = EstadoTarea.PENDIENTE)
         _tareas.update { it + creada }
         guardar { destino ->
             val guardada = destino.insertarTarea(creada)
-            if (guardada.id != creada.id) reemplazarTarea(creada.id, guardada)
+            reemplazarTarea(creada.id, guardada)
         }
         return Result.success(Unit)
     }
@@ -177,7 +223,7 @@ open class RepositorioOperacionImpl(
     override fun marcarRealizada(tareaId: Int, usuarioId: Int, grupo: String, comentario: String, fotoUri: String?): Result<Unit> {
         val t = obtenerTarea(tareaId) ?: return fallo("La tarea no existe")
         val esSuya = t.responsableUsuarioId == usuarioId ||
-                (t.responsableUsuarioId == null && t.grupoAsignado == grupo)
+                (t.responsableUsuarioId == null && grupo.isNotBlank() && t.grupoAsignado == grupo)
         if (!esSuya) return fallo("Esta tarea no está asignada a ti")
         val puedeEnviar = t.estado == EstadoTarea.PENDIENTE || t.estado == EstadoTarea.EN_DESARROLLO ||
                 t.estado == EstadoTarea.RECHAZADA // rechazada = se puede repetir
@@ -221,7 +267,10 @@ open class RepositorioOperacionImpl(
 
     private fun actualizarTarea(id: Int, cambio: (Tarea) -> Tarea) {
         _tareas.update { lista -> lista.map { if (it.id == id) cambio(it) else it } }
-        obtenerTarea(id)?.let { t -> guardar { it.actualizarTarea(t) } }
+        obtenerTarea(id)?.let { t -> guardar { destino ->
+            if (destino is cl.duoc.huertoescolar.data.remote.PersistenciaRetrofit) reemplazarTarea(id, destino.actualizarTareaConfirmada(t))
+            else destino.actualizarTarea(t)
+        } }
     }
 
     // ---------- PROBLEMAS ----------
@@ -236,7 +285,7 @@ open class RepositorioOperacionImpl(
     ): Result<Unit> {
         if (descripcion.isBlank()) return fallo("Describe brevemente el problema")
 
-        return mutexReportes.withLock {
+        return mutex.withLock {
             try {
                 // Espera la carga para evitar que sobrescriba un reporte recién creado.
                 cargaInicial?.let { carga ->
@@ -287,7 +336,7 @@ open class RepositorioOperacionImpl(
             return fallo("Solo docentes o talleristas pueden dar seguimiento")
         }
 
-        return mutexReportes.withLock {
+        return mutex.withLock {
             try {
                 cargaInicial?.let { carga ->
                     carga.join()
@@ -313,9 +362,15 @@ open class RepositorioOperacionImpl(
                 )
 
                 // Si falla, no se modifica la copia que muestra la aplicación.
-                persistencia?.actualizarProblema(actualizado)
+                val destino = persistencia
+                val guardado = if (destino is cl.duoc.huertoescolar.data.remote.PersistenciaRetrofit) {
+                    destino.actualizarProblemaConfirmado(actualizado)
+                } else {
+                    destino?.actualizarProblema(actualizado)
+                    actualizado
+                }
                 _problemas.update { lista ->
-                    lista.map { if (it.id == id) actualizado else it }
+                    lista.map { if (it.id == id) guardado else it }
                 }
                 Result.success(Unit)
             } catch (e: CancellationException) {
@@ -323,6 +378,22 @@ open class RepositorioOperacionImpl(
             } catch (e: Exception) {
                 Result.failure(e)
             }
+        }
+    }
+
+    suspend fun eliminarTarea(id: Int, rol: RolUsuario): Result<Unit> = confirmar {
+        if (rol != RolUsuario.ADMINISTRADOR) fallo("Acceso restringido")
+        else {
+            guardar { it.eliminarTarea(id); _tareas.update { lista -> lista.filterNot { it.id == id } } }
+            Result.success(Unit)
+        }
+    }
+
+    suspend fun eliminarProblema(id: Int, rol: RolUsuario): Result<Unit> = confirmar {
+        if (rol != RolUsuario.ADMINISTRADOR) fallo("Acceso restringido")
+        else {
+            guardar { cl.duoc.huertoescolar.data.remote.ClienteApiOperacion.operacion.eliminarProblema(id); _problemas.update { lista -> lista.filterNot { it.id == id } } }
+            Result.success(Unit)
         }
     }
 
@@ -402,7 +473,6 @@ open class RepositorioOperacionImpl(
 
         return eventos.sortedByDescending { it.fecha }
     }
-
 }
 
 object RepositorioOperacion : RepositorioOperacionImpl()

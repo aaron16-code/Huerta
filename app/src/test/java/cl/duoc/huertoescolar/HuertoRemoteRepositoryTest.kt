@@ -68,36 +68,14 @@ class HuertoRemoteRepositoryTest {
     }
 
     @Test
-    fun noActualizaSectorSiNoTieneResponsable() = runBlocking {
-        coEvery { api.obtenerSector(8) } returns SectorDto(
-            id = 8,
-            nombre = "Bancal",
-            descripcion = "Descripción",
-            ubicacion = "Zona norte",
-            estado = "DISPONIBLE",
-            responsableId = null
-        )
-
-        try {
-            repository.actualizarSector(
-                id = 8,
-                nombre = "Nuevo nombre",
-                descripcion = "Descripción",
-                ubicacion = "Zona sur",
-                estado = EstadoSector.EN_USO
-            )
-
-            fail("Debía rechazar un sector sin responsable")
-        } catch (e: IllegalArgumentException) {
-            assertEquals(
-                "El sector no tiene un responsable asignado.",
-                e.message
-            )
-        }
-
-        coVerify(exactly = 0) {
-            api.actualizarSector(any(), any())
-        }
+    fun actualizaSectorSinResponsable() = runBlocking {
+        val original = SectorDto(8, "Bancal", "Descripción", "Zona norte", "DISPONIBLE", null)
+        val solicitud = SectorRequest("Nuevo nombre", "Descripción", "Zona sur", "EN_USO", null)
+        val respuesta = original.copy(nombre = solicitud.nombre, ubicacion = solicitud.ubicacion, estado = solicitud.estado)
+        coEvery { api.obtenerSector(8) } returns original
+        coEvery { api.actualizarSector(8, solicitud) } returns respuesta
+        assertEquals(respuesta, repository.actualizarSector(8, solicitud.nombre, solicitud.descripcion, solicitud.ubicacion, EstadoSector.EN_USO))
+        coVerify(exactly = 1) { api.actualizarSector(8, solicitud) }
     }
 
     @Test

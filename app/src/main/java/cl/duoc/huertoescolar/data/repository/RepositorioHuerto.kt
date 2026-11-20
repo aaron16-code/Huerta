@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.collections.plus
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 object RepositorioHuerto :
@@ -32,6 +31,7 @@ object RepositorioHuerto :
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var huertoDao: HuertoDao? = null
     private var inicializado = false
+    val modoAplicacion get() = inicializado
 
     override var sectores by mutableStateOf(listaSectoresInicial())
         private set
@@ -48,35 +48,40 @@ object RepositorioHuerto :
     fun inicializar(context: Context) {
         if (inicializado) return
         inicializado = true
+        huertoDao = OperacionDatabase.getInstance(context).huertoDao()
+        sectores = emptyList()
+        cultivos = emptyList()
+    }
 
-        val dao = OperacionDatabase.getInstance(context).huertoDao()
-        huertoDao = dao
+    private fun cl.duoc.huertoescolar.data.remote.SectorDto.modelo() = Sector(id, nombre, descripcion.orEmpty(), ubicacion.orEmpty(), cl.duoc.huertoescolar.domain.model.EstadoSector.valueOf(estado), cl.duoc.huertoescolar.data.UsuariosPrueba.todos.find { it.id == responsableId }?.nombre ?: "Sin responsable")
+    private fun cl.duoc.huertoescolar.data.remote.CultivoDto.modelo() = Cultivo(id, nombre, descripcion.orEmpty(), sectorId, fechaSiembra.orEmpty(), fechaCosechaEstimada.orEmpty(), frecuenciaRiegoDias, cl.duoc.huertoescolar.domain.model.EstadoCultivo.valueOf(estado), observaciones.orEmpty(), fotoUri)
 
-        scope.launch {
-            if (dao.contarSectores() == 0) {
-                dao.insertarSector(listaSectoresInicial().first().toEntity())
-            }
-
-            if (dao.contarCultivos() == 0) {
-                dao.insertarCultivo(listaCultivosInicial().first().toEntity())
-            }
-        }
-
-        scope.launch {
-            dao.observarSectores().collectLatest { entidades ->
-                withContext(Dispatchers.Main) {
-                    sectores = entidades.map { it.toModelo() }
-                }
-            }
-        }
-
-        scope.launch {
-            dao.observarCultivos().collectLatest { entidades ->
-                withContext(Dispatchers.Main) {
-                    cultivos = entidades.map { it.toModelo() }
-                }
-            }
-        }
+    suspend fun sincronizar() {
+        val api = HuertoRemoteRepository()
+        val nuevosSectores = api.obtenerSectores().map { it.modelo() }
+        val nuevosCultivos = api.obtenerCultivos().map { it.modelo() }
+        sectores = nuevosSectores
+        cultivos = nuevosCultivos
+        guardarCache()
+    }
+    suspend fun recibirSector(dto: cl.duoc.huertoescolar.data.remote.SectorDto) {
+        if (!inicializado) return
+        sectores = sectores.filterNot { it.id == dto.id } + dto.modelo()
+        guardarCache()
+    }
+    suspend fun recibirCultivo(dto: cl.duoc.huertoescolar.data.remote.CultivoDto) {
+        if (!inicializado) return
+        cultivos = cultivos.filterNot { it.id == dto.id } + dto.modelo()
+        guardarCache()
+    }
+    suspend fun quitarSector(id: Int) { sectores = sectores.filterNot { it.id == id }; guardarCache() }
+    suspend fun quitarCultivo(id: Int) { cultivos = cultivos.filterNot { it.id == id }; guardarCache() }
+    private suspend fun guardarCache() {
+        val dao = huertoDao ?: return
+        try {
+            dao.reemplazarCatalogo(sectores.map { it.toEntity() }, cultivos.map { it.toEntity() })
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+        catch (e: Exception) { android.util.Log.w("HuertoRoom", "No se pudo actualizar la copia local", e) }
     }
 
     override fun agregarSector(sector: Sector) {
